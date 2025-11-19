@@ -37,7 +37,7 @@
             max-width: 100vw;
             overflow-x: hidden;
             position: relative;
-            padding-bottom: 80px; /* Space for floating buttons */
+            padding-bottom: 90px; /* Space for bottom nav */
         }
 
         .royal-font {
@@ -133,6 +133,15 @@
         /* Zomato-like Image Styling */
         .menu-item-image {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .heart-filled {
+            fill: #A40046;
+            color: #A40046;
+        }
+        .heart-outline {
+            fill: none;
+            color: #6b7280;
         }
     </style>
     <link rel="stylesheet" href="/index.css">
@@ -385,12 +394,14 @@
             searchResults: null,
             searchQueryDisplay: '',
             isCategoryModalOpen: false,
-            isFloatingCategoryButtonVisible: false,
-            isFloatingCartButtonVisible: false,
             lastAddedItem: null,
             notificationKey: 0,
             selectedItem: null,
-            isAddressModalOpen: false
+            isAddressModalOpen: false,
+            favorites: JSON.parse(localStorage.getItem('favoritesNaiBahu')) || [],
+            isNoteModalOpen: false,
+            pendingItemId: null,
+            view: 'home' // 'home' or 'favorites'
         };
 
         const root = document.getElementById('root');
@@ -408,7 +419,7 @@
         const Header = ({ cartCount }) => `
             <header class="sticky top-0 z-40 shadow-md text-white w-full bg-[#A40046]">
                 <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
-                    <a href="#" class="flex items-center space-x-2 flex-shrink-0">
+                    <a href="#" onclick="setView('home')" class="flex items-center space-x-2 flex-shrink-0">
                         <img src="naibahu.png" alt="Logo" class="h-10 w-auto" />
                         <div class="flex flex-col">
                             <span class="font-bold text-lg royal-font leading-tight">NAई बहु</span>
@@ -428,16 +439,19 @@
             </header>
         `;
 
-        const MenuItemCard = ({ item }) => `
-            <div class="menu-item-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full transform transition-all duration-200 cursor-pointer hover:shadow-lg" data-item-id="${item.id}">
+        const MenuItemCard = ({ item, isFavorite }) => `
+            <div class="menu-item-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full transform transition-all duration-200 cursor-pointer hover:shadow-lg relative" data-item-id="${item.id}">
                 <div class="p-4 flex gap-4 items-start">
                     <div class="flex-grow flex flex-col min-w-0">
-                        <h3 class="text-lg font-bold text-gray-800 royal-font leading-snug mb-1">${item.name}</h3>
+                        <h3 class="text-lg font-bold text-gray-800 royal-font leading-snug mb-1 pr-6">${item.name}</h3>
                         <p class="text-gray-500 text-xs sm:text-sm mb-2 line-clamp-2">${item.description}</p>
                         <span class="font-bold text-gray-800 text-lg mt-auto">₹${item.price}</span>
                     </div>
                     <div class="relative flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32">
                          <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover rounded-xl menu-item-image" loading="lazy">
+                         <button class="toggle-fav-btn absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center z-10" data-item-id="${item.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${isFavorite ? 'text-[#A40046]' : 'text-gray-400'} heart-icon"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                         </button>
                          <button class="add-to-cart-btn absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white text-[#A40046] border border-[#A40046] px-5 py-1.5 rounded-lg font-bold shadow-md hover:bg-[#A40046] hover:text-white text-sm transition-colors uppercase tracking-wide" data-item-id="${item.id}">
                             ADD
                         </button>
@@ -449,8 +463,7 @@
         const CategorySlider = ({ activeCategory }) => {
             const categories = ['All', ...Object.keys(categoryImages).filter(c => c !== 'All')];
             return `
-                <div class="col-span-1 md:col-span-2 my-8">
-                    <h3 class="text-xl font-bold royal-font mb-4 text-gray-800 px-2">Inspiration for your first order</h3>
+                <div class="col-span-1 md:col-span-2 my-6">
                     <div class="category-slider-container flex items-center gap-6 overflow-x-auto pb-6 px-2">
                         ${categories.map(category => `
                             <div class="category-slider-item flex-shrink-0 w-32 flex flex-col items-center cursor-pointer group" data-category="${category}">
@@ -465,29 +478,65 @@
             `;
         };
 
-        const MenuSection = ({ activeCategory, searchResults, searchQueryDisplay, filteredMenu }) => {
-            const itemsToDisplay = searchResults !== null ? searchResults : filteredMenu;
+        const SuggestionsSlider = () => {
+            const suggestionItems = MENU.filter(item => item.category === 'Drinks & Add On' || item.category === 'Papad').sort(() => 0.5 - Math.random()).slice(0, 6);
+            return `
+                <div class="col-span-1 md:col-span-2 mt-8 mb-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold royal-font mb-4 text-gray-800">Complete your meal</h3>
+                    <div class="category-slider-container flex items-center gap-4 overflow-x-auto pb-2">
+                        ${suggestionItems.map(item => `
+                            <div class="flex-shrink-0 w-40 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden flex flex-col cursor-pointer suggestion-item" data-item-id="${item.id}">
+                                <div class="h-24 w-full overflow-hidden">
+                                     <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" loading="lazy"/>
+                                </div>
+                                <div class="p-2 flex flex-col flex-grow">
+                                    <h4 class="text-sm font-bold text-gray-800 line-clamp-1">${item.name}</h4>
+                                    <div class="mt-auto flex justify-between items-center pt-2">
+                                        <span class="text-sm font-semibold">₹${item.price}</span>
+                                        <button class="text-[10px] font-bold text-[#A40046] border border-[#A40046] px-2 py-1 rounded bg-white uppercase hover:bg-[#A40046] hover:text-white transition-colors add-to-cart-btn" data-item-id="${item.id}">ADD</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
+        const MenuSection = ({ activeCategory, searchResults, searchQueryDisplay, filteredMenu, view, favorites, cartCount }) => {
+            let itemsToDisplay = searchResults !== null ? searchResults : filteredMenu;
             
+            if (view === 'favorites') {
+                itemsToDisplay = MENU.filter(item => favorites.includes(item.id));
+            }
+
             const menuItemsHtml = itemsToDisplay.reduce((acc, item, index) => {
-                // Insert slider at the top for All category or standard view
-                if (index === 0 && searchResults === null) {
+                // Insert slider at the top for All category or standard view, but not in favorites view
+                if (index === 0 && searchResults === null && view === 'home') {
                    acc.push(CategorySlider({ activeCategory }));
                 }
-                acc.push(MenuItemCard({ item }));
+                acc.push(MenuItemCard({ item, isFavorite: favorites.includes(item.id) }));
                 return acc;
             }, []).join('');
             
-            // If filtered or search results and empty, render slider at top still if no items
+            // Slider fallback
             let sliderHtml = '';
-             if (itemsToDisplay.length === 0 && searchResults === null) {
+             if (itemsToDisplay.length === 0 && searchResults === null && view === 'home') {
                  sliderHtml = CategorySlider({ activeCategory });
             }
 
+            // Suggestions slider if cart has items
+            let suggestionsHtml = '';
+            if (cartCount > 0) {
+                suggestionsHtml = SuggestionsSlider();
+            }
 
             return `
                 <div class="lg:col-span-2 pb-20">
+                    ${view === 'favorites' ? `<h2 class="text-2xl font-bold royal-font text-gray-800 mb-6 px-2">Your Favorites</h2>` : ''}
+                    
                     ${searchResults !== null ? `
-                        <div class="flex justify-between items-center mb-6">
+                        <div class="flex justify-between items-center mb-6 px-2">
                             <h2 class="text-2xl font-bold royal-font text-gray-800">Search Results for "${searchQueryDisplay}"</h2>
                             <button id="clear-search-btn" class="text-sm text-[#A40046] font-medium hover:underline">Clear Search</button>
                         </div>
@@ -497,18 +546,39 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             ${menuItemsHtml}
                         </div>
+                        ${suggestionsHtml}
                     ` : `
                         ${sliderHtml}
                         <div class="text-center py-20 px-4">
                             <img src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png" class="w-24 h-24 mx-auto mb-4 opacity-50" alt="No items">
-                            <p class="text-xl text-gray-500 royal-font">No items found for "${searchQueryDisplay}"</p>
-                            <button id="reset-search-btn" class="mt-4 text-[#A40046] font-bold">Browse Menu</button>
+                            <p class="text-xl text-gray-500 royal-font">${view === 'favorites' ? 'No favorites yet. Start adding some!' : `No items found for "${searchQueryDisplay}"`}</p>
+                            ${view !== 'favorites' ? `<button id="reset-search-btn" class="mt-4 text-[#A40046] font-bold">Browse Menu</button>` : `<button onclick="setView('home')" class="mt-4 text-[#A40046] font-bold">Browse Menu</button>`}
                         </div>
                     `}
                 </div>
             `;
         };
         
+        const NoteModal = ({ isOpen, itemId }) => {
+            if (!isOpen || !itemId) return '';
+            const item = MENU.find(i => i.id === itemId);
+            return `
+                <div id="note-modal-overlay" class="fixed inset-0 bg-black/80 z-[80] flex items-end sm:items-center justify-center p-4 animate-fade-in">
+                    <div class="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-slide-up">
+                        <h3 class="text-lg font-bold text-gray-800 mb-1">Adding ${item.name}</h3>
+                        <p class="text-xs text-gray-500 mb-4">Any special cooking requests?</p>
+                        
+                        <textarea id="item-note-input" rows="3" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] text-gray-800 text-sm resize-none mb-4" placeholder="e.g. Spicy, Less Oil, No Onion..."></textarea>
+                        
+                        <div class="flex gap-3">
+                            <button id="skip-note-btn" class="flex-1 py-3 rounded-xl font-bold text-[#A40046] border border-[#A40046] hover:bg-pink-50 transition-colors">Skip</button>
+                            <button id="add-with-note-btn" class="flex-1 py-3 rounded-xl font-bold text-white bg-[#A40046] hover:bg-[#830038] transition-colors shadow-lg">Add Item</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
         const CategoryModal = ({ isOpen, activeCategory }) => {
             if (!isOpen) return '';
             const categories = ['All', ...Object.keys(categoryImages).filter(c => c !== 'All')];
@@ -536,7 +606,7 @@
             `;
         };
 
-        const ItemDetailModal = ({ item }) => {
+        const ItemDetailModal = ({ item, isFavorite }) => {
             if (!item) return '';
             return `
                 <div id="item-detail-overlay" class="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 animate-modal-fade-in">
@@ -548,7 +618,12 @@
                             </button>
                         </div>
                         <div class="p-6 flex-grow overflow-y-auto">
-                            <h3 class="text-2xl font-bold royal-font text-gray-900 mb-2">${item.name}</h3>
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-2xl font-bold royal-font text-gray-900">${item.name}</h3>
+                                <button class="toggle-fav-btn w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 transition-colors" data-item-id="${item.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${isFavorite ? 'text-[#A40046]' : 'text-gray-400'}"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                </button>
+                            </div>
                             <div class="flex items-center mb-4">
                                 <span class="text-2xl font-bold text-gray-900">₹${item.price}</span>
                             </div>
@@ -568,23 +643,41 @@
             if (!isOpen) return '';
             return `
                 <div id="address-modal-overlay" class="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4 animate-modal-fade-in">
-                    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-modal-scale-up">
-                        <div class="flex justify-between items-center mb-6">
+                    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-modal-scale-up max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-4">
                             <h3 class="text-xl royal-font font-bold text-gray-800">Delivery Details</h3>
                             <button id="address-modal-close" class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
                         </div>
-                        <div class="space-y-5">
+                        <div class="space-y-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Your Name</label>
-                                <input type="text" id="customer-name" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] focus:bg-white transition-colors text-gray-800 font-medium" placeholder="e.g. Rahul Sharma">
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Full Name</label>
+                                <input type="text" id="customer-name" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] text-gray-800 font-medium" placeholder="e.g. Rahul Sharma">
                             </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Flat / House No.</label>
+                                    <input type="text" id="flat-no" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] text-gray-800 font-medium" placeholder="e.g. B-402">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pincode</label>
+                                    <input type="number" id="pincode" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] text-gray-800 font-medium" placeholder="e.g. 395006">
+                                </div>
+                            </div>
+
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Delivery Address</label>
-                                <textarea id="customer-address" rows="3" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] focus:bg-white transition-colors text-gray-800 font-medium resize-none" placeholder="House No, Street, Area..."></textarea>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Society / Apartment Name</label>
+                                <input type="text" id="society" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] text-gray-800 font-medium" placeholder="e.g. Gokuldham Society">
                             </div>
-                            <button id="confirm-whatsapp-btn" class="w-full py-4 px-6 rounded-xl text-white font-bold bg-[#25D366] hover:bg-[#128C7E] shadow-lg flex items-center justify-center gap-3 transition-transform hover:scale-[1.02]">
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Area / Landmark</label>
+                                <input type="text" id="area" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] text-gray-800 font-medium" placeholder="e.g. Near City Garden">
+                            </div>
+
+                            <button id="confirm-whatsapp-btn" class="w-full py-4 px-6 rounded-xl text-white font-bold bg-[#25D366] hover:bg-[#128C7E] shadow-lg flex items-center justify-center gap-3 transition-transform hover:scale-[1.02] mt-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                                 <span>Send Order</span>
                             </button>
@@ -619,6 +712,7 @@
                                     <div class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
                                     <div class="flex-1">
                                         <p class="font-semibold text-sm text-gray-800 truncate">${item.name}</p>
+                                        ${item.note ? `<p class="text-[10px] text-[#A40046] font-medium italic">"${item.note}"</p>` : ''}
                                         <p class="text-xs text-gray-500">₹${item.price}</p>
                                     </div>
                                 </div>
@@ -662,18 +756,18 @@
                 </div>
             `;
         };
-        
-        const FloatingCategoryButton = ({ isVisible }) => `
-            <button id="floating-category-btn" class="fixed bottom-6 left-1/2 -translate-x-[calc(50%+3.5rem)] z-40 w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center shadow-xl transform transition-all duration-300 hover:scale-110 lg:hidden ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            </button>
-        `;
 
-        const FloatingCartButton = ({ isVisible, cartCount }) => `
-            <button id="floating-cart-btn" class="fixed bottom-6 left-1/2 translate-x-[calc(50%-3.5rem)] z-40 w-12 h-12 bg-[#A40046] text-white rounded-full flex items-center justify-center shadow-xl transform transition-all duration-300 hover:scale-110 lg:hidden ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                ${cartCount > 0 ? `<span class="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold bg-white text-[#A40046] rounded-full border border-[#A40046]">${cartCount}</span>` : ''}
-            </button>
+        const BottomNav = ({ activeView }) => `
+            <div class="fixed bottom-0 left-0 w-full bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-[50] flex justify-around items-center py-3 lg:hidden border-t border-gray-100">
+                <button class="flex flex-col items-center gap-1 w-full ${activeView === 'home' ? 'text-[#A40046]' : 'text-gray-400'}" onclick="setView('home')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span class="text-[10px] font-bold">Home</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 w-full ${activeView === 'favorites' ? 'text-[#A40046]' : 'text-gray-400'}" onclick="setView('favorites')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="${activeView === 'favorites' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <span class="text-[10px] font-bold">Favorites</span>
+                </button>
+            </div>
         `;
         
         const AddToCartNotification = ({ itemName, key }) => {
@@ -689,7 +783,7 @@
         };
 
         const Footer = () => `
-            <footer class="bg-white py-8 mt-12 border-t border-gray-200">
+            <footer class="bg-white py-8 mt-12 border-t border-gray-200 pb-24">
                 <div class="container mx-auto px-4 text-center">
                     <p class="font-bold text-[#A40046] text-xl royal-font mb-2">NAई बहु</p>
                     <p class="text-sm text-gray-500 mb-4">Delicious food, delivered to your doorstep.</p>
@@ -700,6 +794,15 @@
 
         // --- LOGIC FUNCTIONS ---
         
+        window.setView = (viewName) => {
+            state.view = viewName;
+            state.isSearchOpen = false;
+            state.searchResults = null;
+            state.searchQueryDisplay = '';
+            window.scrollTo(0, 0);
+            renderApp();
+        }
+
         function handleFilterMenu(category) {
             state.activeCategory = category;
             state.searchResults = null;
@@ -727,18 +830,30 @@
         }
 
         function addToCart(itemId) {
-            const item = MENU.find(i => i.id === itemId);
+            state.isNoteModalOpen = true;
+            state.pendingItemId = itemId;
+            renderApp();
+        }
+
+        function confirmAddToCart(note = '') {
+             const itemId = state.pendingItemId;
+             if (!itemId) return;
+
+             const item = MENU.find(i => i.id === itemId);
             if (!item) return;
 
             const existingItem = state.cart[itemId];
             if (existingItem) {
                 existingItem.quantity += 1;
+                if (note) existingItem.note = note; // Update note
             } else {
-                state.cart[itemId] = { ...item, quantity: 1 };
+                state.cart[itemId] = { ...item, quantity: 1, note: note };
             }
             
             state.lastAddedItem = item.name;
             state.notificationKey += 1;
+            state.isNoteModalOpen = false;
+            state.pendingItemId = null;
             
             renderApp();
 
@@ -748,6 +863,17 @@
                     renderApp(); 
                 }
             }, 3000);
+        }
+
+        function toggleFavorite(itemId) {
+            const index = state.favorites.indexOf(itemId);
+            if (index === -1) {
+                state.favorites.push(itemId);
+            } else {
+                state.favorites.splice(index, 1);
+            }
+            localStorage.setItem('favoritesNaiBahu', JSON.stringify(state.favorites));
+            renderApp();
         }
         
         function changeQuantity(itemId, change) {
@@ -772,10 +898,13 @@
 
         function handleWhatsAppRedirect() {
             const name = document.getElementById('customer-name').value.trim();
-            const address = document.getElementById('customer-address').value.trim();
+            const flatNo = document.getElementById('flat-no').value.trim();
+            const society = document.getElementById('society').value.trim();
+            const area = document.getElementById('area').value.trim();
+            const pincode = document.getElementById('pincode').value.trim();
 
-            if (!name || !address) {
-                alert("Please fill in both Name and Address.");
+            if (!name || !flatNo || !society || !area || !pincode) {
+                alert("Please fill in all address details.");
                 return;
             }
 
@@ -785,12 +914,16 @@
             let message = `*New Home Delivery Order*\n`;
             message += `------------------------------\n`;
             message += `*Name:* ${name}\n`;
-            message += `*Address:* ${address}\n`;
+            message += `*Address:*\n`;
+            message += `${flatNo}, ${society},\n`;
+            message += `${area} - ${pincode}\n`;
             message += `------------------------------\n`;
             message += `*Order Details:*\n`;
             
             items.forEach(item => {
-                message += `- ${item.name} x ${item.quantity} (₹${item.price * item.quantity})\n`;
+                message += `- ${item.name} x ${item.quantity} (₹${item.price * item.quantity})`;
+                if(item.note) message += `\n  _Note: ${item.note}_`;
+                message += `\n`;
             });
             
             message += `------------------------------\n`;
@@ -828,17 +961,17 @@
                         ${AddToCartNotification({ itemName: state.lastAddedItem, key: state.notificationKey })}
                         ${Header({ cartCount })}
                         <main class="container mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            ${MenuSection({ activeCategory: state.activeCategory, searchResults: state.searchResults, searchQueryDisplay: state.searchQueryDisplay, filteredMenu })}
+                            ${MenuSection({ activeCategory: state.activeCategory, searchResults: state.searchResults, searchQueryDisplay: state.searchQueryDisplay, filteredMenu, view: state.view, favorites: state.favorites, cartCount })}
                             ${CartSidebar({ isOpen: state.isCartOpen, cart: state.cart })}
                         </main>
                     </div>
                     ${Footer()}
                     ${SearchModal({ isOpen: state.isSearchOpen })}
                     ${CategoryModal({ isOpen: state.isCategoryModalOpen, activeCategory: state.activeCategory })}
+                    ${NoteModal({ isOpen: state.isNoteModalOpen, itemId: state.pendingItemId })}
                     ${AddressModal({ isOpen: state.isAddressModalOpen })}
-                    ${FloatingCategoryButton({ isVisible: state.isFloatingCategoryButtonVisible })}
-                    ${FloatingCartButton({ isVisible: state.isFloatingCartButtonVisible, cartCount })}
-                    ${ItemDetailModal({ item: state.selectedItem })}
+                    ${ItemDetailModal({ item: state.selectedItem, isFavorite: state.selectedItem && state.favorites.includes(state.selectedItem.id) })}
+                    ${BottomNav({ activeView: state.view })}
                 </div>
             `;
             
@@ -864,8 +997,17 @@
                     addToCart(parseInt(btn.dataset.itemId));
                 });
             });
+            document.querySelectorAll('.toggle-fav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFavorite(parseInt(btn.dataset.itemId));
+                });
+            });
             document.querySelectorAll('.menu-item-card').forEach(card => {
-                card.addEventListener('click', () => {
+                card.addEventListener('click', (e) => {
+                    // Prevent opening details if clicking buttons inside card
+                    if (e.target.closest('button')) return;
+                    
                     const itemId = parseInt(card.dataset.itemId);
                     state.selectedItem = MENU.find(i => i.id === itemId);
                     renderApp();
@@ -925,6 +1067,26 @@
                 });
             }
 
+            // Note Modal
+            const noteModalOverlay = document.getElementById('note-modal-overlay');
+            if (noteModalOverlay) {
+                noteModalOverlay.addEventListener('click', (e) => {
+                    // Close if clicked outside
+                    if (e.target === noteModalOverlay) {
+                        state.isNoteModalOpen = false;
+                        state.pendingItemId = null;
+                        renderApp();
+                    }
+                });
+                document.getElementById('skip-note-btn').addEventListener('click', () => {
+                    confirmAddToCart('');
+                });
+                document.getElementById('add-with-note-btn').addEventListener('click', () => {
+                    const note = document.getElementById('item-note-input').value.trim();
+                    confirmAddToCart(note);
+                });
+            }
+
             // Item Detail Modal
             const itemDetailOverlay = document.getElementById('item-detail-overlay');
             if(itemDetailOverlay) {
@@ -938,6 +1100,11 @@
                 document.querySelector('.modal-add-to-cart-btn')?.addEventListener('click', (e) => {
                     addToCart(parseInt(e.currentTarget.dataset.itemId));
                     closeModal();
+                });
+                document.querySelector('.toggle-fav-btn.modal')?.addEventListener('click', (e) => {
+                     toggleFavorite(parseInt(e.currentTarget.dataset.itemId));
+                     // Re-render but keep modal open logic handled by state.selectedItem persistence in renderApp
+                     // Just ensure selectedItem stays in sync
                 });
             }
 
@@ -953,16 +1120,6 @@
                 document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
                 document.getElementById('confirm-whatsapp-btn').addEventListener('click', handleWhatsAppRedirect);
             }
-
-            // Floating Buttons
-            document.getElementById('floating-category-btn')?.addEventListener('click', () => {
-                 state.isCategoryModalOpen = true;
-                 renderApp();
-            });
-            document.getElementById('floating-cart-btn')?.addEventListener('click', () => {
-                 state.isCartOpen = true;
-                 renderApp();
-            });
         }
         
         function handleSearchInput(query) {
@@ -1044,16 +1201,6 @@
                 state.showSplash = false;
                 renderApp();
             }, 2000);
-            
-            // Scroll listener for floating buttons
-            window.addEventListener('scroll', () => {
-                const shouldBeVisible = window.scrollY > 100;
-                if (state.isFloatingCategoryButtonVisible !== shouldBeVisible || state.isFloatingCartButtonVisible !== shouldBeVisible) {
-                    state.isFloatingCategoryButtonVisible = shouldBeVisible;
-                    state.isFloatingCartButtonVisible = shouldBeVisible;
-                    renderApp();
-                }
-            });
         }
         
         main();
