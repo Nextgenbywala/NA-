@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -131,10 +132,10 @@
         }
         
         /* Button Press Feedback */
-        .add-to-cart-btn, #send-order-btn, #floating-category-btn, #floating-cart-btn, #perform-search-btn, #clear-search-input-btn, #install-app-btn {
+        .add-to-cart-btn, #send-order-btn, #floating-category-btn, #floating-cart-btn, #perform-search-btn, #clear-search-input-btn, #install-app-btn, #favorites-btn {
             transition: transform 0.1s ease-out;
         }
-        .add-to-cart-btn:active, #send-order-btn:active, #floating-category-btn:active, #floating-cart-btn:active, #perform-search-btn:active, #clear-search-input-btn:active, #install-app-btn:active {
+        .add-to-cart-btn:active, #send-order-btn:active, #floating-category-btn:active, #floating-cart-btn:active, #perform-search-btn:active, #clear-search-input-btn:active, #install-app-btn:active, #favorites-btn:active {
             transform: scale(0.95);
         }
 
@@ -179,6 +180,11 @@
         .category-slider-item.is-visible:hover h4 {
             transform: translateY(-4px); /* Make text pop up a bit */
             text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Add shadow to text for readability */
+        }
+        
+        /* Favorite Button Animation */
+        .favorite-toggle-btn:active {
+            transform: scale(0.9);
         }
         
     </style>
@@ -479,7 +485,9 @@
             lastAddedItem: null,
             notificationKey: 0,
             selectedItem: null,
-            isInstallable: false, // New state for PWA installability
+            isInstallable: false,
+            favorites: JSON.parse(localStorage.getItem('favorites')) || [],
+            showFavorites: false
         };
 
         const root = document.getElementById('root');
@@ -494,7 +502,7 @@
             </div>
         `;
 
-        const Header = ({ tableNumber, cartCount, isInstallable }) => `
+        const Header = ({ tableNumber, cartCount, isInstallable, showFavorites, favoritesCount }) => `
             <header class="sticky top-0 z-40 shadow-lg text-white w-full bg-[#A40046] border-b-2 border-[#C0A062]/60">
                 <nav class="container mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4 flex justify-between items-center">
                     <a href="#" class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
@@ -509,12 +517,16 @@
                         ` : ''}
                         <div class="flex items-center space-x-1">
                             <label for="table-number-select" class="text-sm font-medium hidden sm:inline">Table No:</label>
-                             <select id="table-number-select" class="w-24 sm:w-28 p-1 sm:p-2 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors text-black bg-white">
+                             <select id="table-number-select" class="w-24 sm:w-28 p-1 sm:p-2 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors text-[#A40046] bg-[#F5EFE6] font-semibold">
                                 ${TABLE_NUMBERS.map(num => `<option value="${num}" ${tableNumber == num ? 'selected' : ''}>Table ${num}</option>`).join('')}
                             </select>
                         </div>
                         <button id="search-btn" class="relative p-2 sm:p-2.5 rounded-xl hover:bg-[#830038] transition-colors">
                             <svg class="w-5 h-5 sm:w-6 sm:h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </button>
+                        <button id="favorites-btn" class="relative p-2 sm:p-2.5 rounded-xl hover:bg-[#830038] transition-colors ${showFavorites ? 'bg-[#830038] text-rose-200' : ''}">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${showFavorites ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                             ${favoritesCount > 0 ? `<span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-rose-600 rounded-full">${favoritesCount}</span>` : ''}
                         </button>
                         <button id="cart-btn" class="relative p-2 sm:p-2.5 rounded-xl hover:bg-[#830038] transition-colors">
                             <svg class="w-5 h-5 sm:w-6 sm:h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
@@ -525,12 +537,18 @@
             </header>
         `;
 
-        const MenuItemCard = ({ item }) => `
-            <div class="menu-item-card bg-[#F5EFE6] rounded-lg shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col border-2 border-[#C0A062]/50 cursor-pointer" data-item-id="${item.id}">
+        const MenuItemCard = ({ item, isFavorite }) => `
+            <div class="menu-item-card relative bg-[#F5EFE6] rounded-lg shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col border-2 border-[#C0A062]/50 cursor-pointer" data-item-id="${item.id}">
+                <button class="favorite-toggle-btn absolute top-2 right-2 z-20 p-1.5 rounded-full bg-white/90 shadow-sm hover:bg-white transition-transform hover:scale-110 active:scale-95" data-item-id="${item.id}">
+                     ${isFavorite 
+                        ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#A40046" stroke="#A40046" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`
+                        : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A40046" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`
+                     }
+                </button>
                 <div class="p-4 sm:p-5 flex-grow flex items-center gap-4">
                     <img src="${item.image}" alt="${item.name}" class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg shadow-md flex-shrink-0 border-2 border-white/50" loading="lazy">
                     <div class="flex-grow flex flex-col min-w-0 h-full">
-                        <h3 class="text-lg sm:text-xl font-bold royal-font text-[#A40046] truncate">${item.name}</h3>
+                        <h3 class="text-lg sm:text-xl font-bold royal-font text-[#A40046] truncate pr-8">${item.name}</h3>
                         <p class="text-[#5D4037] text-xs sm:text-sm my-1 line-clamp-2 flex-grow">${item.description}</p>
                         <div class="flex justify-between items-center mt-auto">
                             <span class="text-xl sm:text-2xl font-bold font-sans text-[#5D4037]">
@@ -569,13 +587,14 @@
             `;
         };
 
-        const MenuSection = ({ activeCategory, searchResults, searchQueryDisplay, filteredMenu }) => {
+        const MenuSection = ({ activeCategory, searchResults, searchQueryDisplay, filteredMenu, showFavorites, favorites }) => {
             const itemsToDisplay = searchResults !== null ? searchResults : filteredMenu;
             
             const menuItemsHtml = itemsToDisplay.reduce((acc, item, index) => {
-                acc.push(MenuItemCard({ item }));
-                // Insert slider after the 5th item (index 4), only if not searching
-                if (index === 4 && searchResults === null) {
+                const isFavorite = favorites.includes(item.id);
+                acc.push(MenuItemCard({ item, isFavorite }));
+                // Insert slider after the 5th item (index 4), only if not searching and not viewing favorites
+                if (index === 4 && searchResults === null && !showFavorites) {
                     acc.push(CategorySlider({ activeCategory }));
                 }
                 return acc;
@@ -590,29 +609,26 @@
                         </div>
                     ` : `
                         <div class="flex justify-between items-center mb-2">
-                            <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold royal-font">Explore Our Menu</h2>
+                            <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold royal-font">${showFavorites ? 'Your Favorites' : 'Explore Our Menu'}</h2>
+                            ${!showFavorites ? `
                             <button id="category-modal-trigger" class="flex items-center gap-2 bg-[#F5EFE6] text-[#A40046] px-4 py-2 rounded-full font-bold shadow-md hover:bg-white transition-colors transform hover:scale-105 border-2 border-[#C0A062]/50">
                                 <span>${activeCategory}</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                             </button>
+                            ` : ''}
                         </div>
 
                         <!-- Reverted Location and Time Section -->
-                        <div class="flex flex-row sm:items-center gap-2 sm:gap-6 mb-6 text-gray-200 text-xs sm:text-sm font-medium">
-    <!-- View Location Link -->
-    <a href="https://maps.app.goo.gl/LWXo8GChenmBK89Z8" target="_blank" class="flex items-center gap-2 hover:text-[#C0A062] transition-colors w-fit">
-        <!-- Map Pin Icon (16px) -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-        <span class="underline underline-offset-2 decoration-[#C0A062]/60">View Location</span>
-    </a>
-
-    <!-- Opening Hours -->
-    <div class="flex items-center gap-2 w-fit">
-        <!-- Clock Icon (16px) -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-        <span>5:00 p.m to 2:30 a.m</span>
-    </div>
-</div>
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mb-6 text-gray-200 text-sm sm:text-base font-medium">
+                             <a href="https://maps.google.com/?q=Nai+Bahu+Restaurant" target="_blank" class="flex items-center gap-2 hover:text-[#C0A062] transition-colors w-fit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                <span class="underline underline-offset-2 decoration-[#C0A062]/60">View Location</span>
+                            </a>
+                            <div class="flex items-center gap-2 w-fit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                <span>5:00 p.m to 2:30 a.m</span>
+                            </div>
+                        </div>
                     `}
                     
                     ${itemsToDisplay.length > 0 ? `
@@ -621,7 +637,8 @@
                         </div>
                     ` : `
                         <div class="text-center py-10 sm:py-20 px-4 col-span-full">
-                            <p class="text-lg text-gray-300">No items found for "${searchQueryDisplay}". Try a different search!</p>
+                            <p class="text-lg text-gray-300">${showFavorites ? "You haven't added any favorites yet." : `No items found for "${searchQueryDisplay}". Try a different search!`}</p>
+                            ${showFavorites ? `<button id="back-to-menu-btn" class="mt-4 bg-white text-[#A40046] px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors">Browse Menu</button>` : ''}
                         </div>
                     `}
                 </div>
@@ -823,6 +840,7 @@
             state.activeCategory = category;
             state.searchResults = null;
             state.searchQueryDisplay = '';
+            state.showFavorites = false;
             renderApp();
         }
         
@@ -842,6 +860,24 @@
             state.searchResults = null;
             state.searchQueryDisplay = '';
             handleFilterMenu(state.activeCategory);
+        }
+
+        function toggleFavorite(itemId) {
+            const index = state.favorites.indexOf(itemId);
+            if (index === -1) {
+                state.favorites.push(itemId);
+            } else {
+                state.favorites.splice(index, 1);
+            }
+            localStorage.setItem('favorites', JSON.stringify(state.favorites));
+            renderApp();
+        }
+
+        function toggleFavoritesView() {
+            state.showFavorites = !state.showFavorites;
+            state.searchResults = null;
+            state.searchQueryDisplay = '';
+            renderApp();
         }
 
         function addToCart(itemId) {
@@ -877,6 +913,22 @@
                 delete state.cart[itemId];
             }
             renderApp();
+        }
+
+        function triggerInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                    state.isInstallable = false;
+                    renderApp();
+                });
+            }
         }
         
         async function sendOrder() {
@@ -942,9 +994,12 @@
 
         function renderApp() {
             const cartCount = Object.values(state.cart).reduce((sum, item) => sum + item.quantity, 0);
-            
+            const favoritesCount = state.favorites.length;
+
             let filteredMenu = MENU;
-            if (state.activeCategory !== 'All') {
+            if (state.showFavorites) {
+                filteredMenu = MENU.filter(item => state.favorites.includes(item.id));
+            } else if (state.activeCategory !== 'All') {
                 filteredMenu = MENU.filter(item => item.category === state.activeCategory);
             }
 
@@ -952,9 +1007,9 @@
                 <div class="relative z-10 min-h-screen flex flex-col">
                     <div class="flex-grow">
                         ${AddToCartNotification({ itemName: state.lastAddedItem, key: state.notificationKey })}
-                        ${Header({ tableNumber: state.tableNumber, cartCount, isInstallable: state.isInstallable })}
+                        ${Header({ tableNumber: state.tableNumber, cartCount, isInstallable: state.isInstallable, showFavorites: state.showFavorites, favoritesCount })}
                         <main class="container mx-auto px-2 sm:px-4 lg:px-8 mt-4 sm:mt-6 lg:mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 text-white">
-                            ${MenuSection({ activeCategory: state.activeCategory, searchResults: state.searchResults, searchQueryDisplay: state.searchQueryDisplay, filteredMenu })}
+                            ${MenuSection({ activeCategory: state.activeCategory, searchResults: state.searchResults, searchQueryDisplay: state.searchQueryDisplay, filteredMenu, showFavorites: state.showFavorites, favorites: state.favorites })}
                             ${CartSidebar({ isOpen: state.isCartOpen, cart: state.cart, previousOrder: state.previousOrder, message: state.message, orderJustSent: state.orderJustSent })}
                         </main>
                     </div>
@@ -1015,18 +1070,11 @@
                 state.isCartOpen = !state.isCartOpen;
                 renderApp();
             });
-            
-            // Install Button Listener
-            document.getElementById('install-app-btn')?.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    deferredPrompt = null;
-                    state.isInstallable = false;
-                    renderApp();
-                }
+            document.getElementById('favorites-btn')?.addEventListener('click', () => {
+                toggleFavoritesView();
             });
-
+            document.getElementById('install-app-btn')?.addEventListener('click', triggerInstall);
+            
             // Menu Section
             document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -1034,17 +1082,30 @@
                     addToCart(parseInt(btn.dataset.itemId));
                 });
             });
+            document.querySelectorAll('.favorite-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFavorite(parseInt(btn.dataset.itemId));
+                });
+            });
             document.querySelectorAll('.menu-item-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const itemId = parseInt(card.dataset.itemId);
-                    state.selectedItem = MENU.find(i => i.id === itemId);
-                    renderApp();
+                card.addEventListener('click', (e) => {
+                    // Only open detail modal if we didn't click favorite or add button
+                    if (!e.target.closest('.favorite-toggle-btn') && !e.target.closest('.add-to-cart-btn')) {
+                        const itemId = parseInt(card.dataset.itemId);
+                        state.selectedItem = MENU.find(i => i.id === itemId);
+                        renderApp();
+                    }
                 });
             });
 
             document.getElementById('clear-search-btn')?.addEventListener('click', clearSearch);
             document.getElementById('category-modal-trigger')?.addEventListener('click', () => {
                 state.isCategoryModalOpen = true;
+                renderApp();
+            });
+            document.getElementById('back-to-menu-btn')?.addEventListener('click', () => {
+                state.showFavorites = false;
                 renderApp();
             });
 
