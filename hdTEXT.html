@@ -1,0 +1,1064 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nai Bahu Restaurant - Home Delivery</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts - Playfair Display and Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            width: 100%;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Lighter gray background for better contrast */
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+            position: relative;
+            padding-bottom: 80px; /* Space for floating buttons */
+        }
+
+        .royal-font {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        /* Splash Screen Animations */
+        @keyframes splash-enter {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .splash-enter-active {
+            animation: splash-enter 1s ease-in-out forwards;
+        }
+
+        @keyframes blur-to-visible {
+            0% {
+                opacity: 0;
+                filter: blur(10px);
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                filter: blur(0);
+                transform: scale(1);
+            }
+        }
+        .logo-animation {
+            animation: blur-to-visible 1.5s forwards;
+        }
+
+        /* Modal Animations */
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slide-up {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.2s ease-out forwards;
+        }
+        .animate-scale-up {
+            animation: slide-up 0.3s ease-out forwards;
+        }
+
+        /* Notification Animation */
+        @keyframes slide-down-fade-out {
+            0% { opacity: 0; transform: translateY(-100%) translateX(-50%); }
+            10% { opacity: 1; transform: translateY(0) translateX(-50%); }
+            90% { opacity: 1; transform: translateY(0) translateX(-50%); }
+            100% { opacity: 0; transform: translateY(-100%) translateX(-50%); }
+        }
+        .animate-notification {
+            animation: slide-down-fade-out 3s ease-in-out forwards;
+        }
+        
+        /* Button Press Feedback */
+        button:active {
+            transform: scale(0.95);
+        }
+        button {
+            transition: transform 0.1s ease-out;
+        }
+
+        /* Category Slider */
+        .category-slider-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            scroll-snap-type: x mandatory;
+        }
+        .category-slider-container::-webkit-scrollbar {
+            display: none;
+        }
+        .category-slider-item {
+            scroll-snap-align: start;
+            transition: transform 0.2s;
+        }
+        .category-slider-item:hover {
+            transform: scale(1.05);
+        }
+
+        /* Zomato-like Image Styling */
+        .menu-item-image {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+    <link rel="stylesheet" href="/index.css">
+</head>
+
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <script type="module">
+        // --- CONSTANTS ---
+        const WHATSAPP_NUMBER = '9173213576';
+        
+        const MENU = [
+            // SOUP
+            { id: 1, name: 'Manchow Soup', price: 100, description: 'Hot and spicy Indo-Chinese soup with chopped veggies.', image: 'Manchow Soup.webp', category: 'Soup', searchTerms: ['manchow', 'soup', 'veg', 'spicy'] },
+            { id: 2, name: 'Hot & Sour Soup', price: 90, description: 'Tangy and spicy soup with mixed vegetables.', image: 'Hot & Sour Soup.webp', category: 'Soup', searchTerms: ['hot', 'sour', 'soup', 'veg', 'spicy'] },
+            { id: 3, name: 'Manchurian Soup', price: 110, description: 'Indo-Chinese soup with vegetable manchurian balls.', image: 'Manchurian Soup.webp', category: 'Soup', searchTerms: ['manchurian', 'soup', 'veg', 'chinese'] },
+            { id: 4, name: 'Lemon Corriander Soup', price: 100, description: 'Refreshing soup with lemon, coriander and veggies.', image: 'Lemon Corriander Soup.webp', category: 'Soup', searchTerms: ['lemon', 'coriander', 'soup', 'veg', 'healthy'] },
+            
+            // BBQ
+            { id: 5, name: 'Paneer Tikka', price: 230, description: 'Marinated paneer cubes grilled in a tandoor.', image: 'Paneer Tikka.webp', category: 'BBQ', searchTerms: ['paneer', 'tikka', 'bbq', 'tandoori', 'starter'] },
+            { id: 6, name: 'Malai Tikka', price: 240, description: 'Creamy paneer tikka marinated in cashew paste.', image: 'Malai Tikka.webp', category: 'BBQ', searchTerms: ['malai', 'tikka', 'paneer', 'bbq', 'starter', 'creamy'] },
+            { id: 7, name: 'Afgani Tikka', price: 240, description: 'Paneer marinated in Afghani-style yogurt and spices.', image: 'Afgani Tikka.webp', category: 'BBQ', searchTerms: ['afgani', 'tikka', 'paneer', 'bbq', 'starter'] },
+            { id: 8, name: 'Aachari Tikka', price: 230, description: 'Spicy paneer tikka flavored with pickle spices.', image: 'Aachari Tikka.webp', category: 'BBQ', searchTerms: ['aachari', 'tikka', 'paneer', 'bbq', 'starter', 'spicy'] },
+            { id: 9, name: 'Sez - Tikka', price: 240, description: 'Sizzling hot paneer tikka served on a hot plate.', image: 'Sez - Tikka.webp', category: 'BBQ', searchTerms: ['sez', 'sizzling', 'tikka', 'paneer', 'bbq', 'starter'] },
+            { id: 10, name: 'Kali Mari Tikka', price: 240, description: 'Paneer tikka flavored with black pepper.', image: 'Kali Mari Tikka.webp', category: 'BBQ', searchTerms: ['kali mari', 'black pepper', 'tikka', 'paneer', 'bbq', 'starter', 'spicy'] },
+            
+            // CHAAP
+            { id: 11, name: 'Masala Chaap', price: 220, description: 'Spicy marinated soya chaap cooked in tandoor.', image: 'Masala Chaap.webp', category: 'Chaap', searchTerms: ['masala', 'chaap', 'soya', 'starter', 'tandoori'] },
+            { id: 12, name: 'Lasaniya Chaap', price: 230, description: 'Soya chaap in rich garlic flavored gravy.', image: 'Lasaniya Chaap.webp', category: 'Chaap', searchTerms: ['lasaniya', 'garlic', 'chaap', 'soya', 'starter'] },
+            { id: 13, name: 'Aachari Chaap', price: 230, description: 'Tangy soya chaap marinated in pickle spices.', image: 'Aachari Chaap.webp', category: 'Chaap', searchTerms: ['aachari', 'chaap', 'soya', 'starter', 'spicy'] },
+            { id: 14, name: 'Sez Chaap', price: 230, description: 'Soya chaap served on a sizzling hot plate.', image: 'Sez Chaap.webp', category: 'Chaap', searchTerms: ['sez', 'sizzling', 'chaap', 'soya', 'starter'] },
+            { id: 15, name: 'Irani Chaap', price: 240, description: 'Soya chaap in special Irani-style marinade.', image: 'Irani Chaap.webp', category: 'Chaap', searchTerms: ['irani', 'chaap', 'soya', 'starter'] },
+            { id: 16, name: 'Malai Chaap', price: 240, description: 'Creamy soya chaap grilled to perfection.', image: 'Malai Chaap.webp', category: 'Chaap', searchTerms: ['malai', 'chaap', 'soya', 'starter', 'creamy'] },
+            { id: 17, name: 'Afgani Chaap', price: 230, description: 'Mild and creamy soya chaap.', image: 'Afgani Chaap.webp', category: 'Chaap', searchTerms: ['afgani', 'chaap', 'soya', 'starter'] },
+            { id: 18, name: 'Reshmi Chaap', price: 240, description: 'Silky smooth soya chaap with cashew marinade.', image: 'Reshmi Chaap.webp', category: 'Chaap', searchTerms: ['reshmi', 'chaap', 'soya', 'starter', 'silky'] },
+            { id: 19, name: 'Khalifa Chaap', price: 240, description: 'Special house preparation of soya chaap.', image: 'Khalifa Chaap.webp', category: 'Chaap', searchTerms: ['khalifa', 'chaap', 'soya', 'starter', 'special'] },
+
+            // MOMOS
+            { id: 20, name: 'Fry Momos', price: 150, description: 'Crispy fried vegetable dumplings.', image: 'Fry Momos.webp', category: 'Momos', searchTerms: ['momos', 'fried', 'dumplings', 'starter', 'chinese'] },
+            { id: 21, name: 'Tandoori Momos', price: 200, description: 'Momos marinated in spices and grilled.', image: 'Tandoori Momos.webp', category: 'Momos', searchTerms: ['momos', 'tandoori', 'dumplings', 'starter', 'fusion'] },
+            { id: 22, name: 'Fry Cheese Momos', price: 180, description: 'Fried dumplings with cheese filling.', image: 'Fry Cheese Momos.webp', category: 'Momos', searchTerms: ['momos', 'cheese', 'fried', 'dumplings', 'starter'] },
+            { id: 23, name: 'Cheese Tandoori Momos', price: 220, description: 'Cheesy momos grilled in tandoor.', image: 'Cheese Tandoori Momos.webp', category: 'Momos', searchTerms: ['momos', 'cheese', 'tandoori', 'dumplings', 'starter'] },
+
+            // PASTA
+            { id: 24, name: 'Red Sauce Pasta', price: 250, description: 'Pasta in tangy tomato and herb sauce.', image: 'Red Sauce Pasta.webp', category: 'Pasta', searchTerms: ['pasta', 'red sauce', 'arrabbiata', 'italian'] },
+            { id: 25, name: 'White Sauce Pasta', price: 250, description: 'Creamy pasta with béchamel sauce.', image: 'White Sauce Pasta.webp', category: 'Pasta', searchTerms: ['pasta', 'white sauce', 'alfredo', 'italian', 'creamy'] },
+            { id: 26, name: 'Pink Sauce Pasta', price: 270, description: 'Blend of red and white sauces.', image: 'Pink Sauce Pasta.webp', category: 'Pasta', searchTerms: ['pasta', 'pink sauce', 'rose', 'italian'] },
+            
+            // PAV BHAJI
+            { id: 27, name: 'Pav Bhaji', price: 100, description: 'Mixed vegetable mash with spices and buttered pav.', image: 'Pav Bhaji.webp', category: 'Pav Bhaji', searchTerms: ['pav', 'bhaji', 'mumbai', 'street food'] },
+            { id: 28, name: 'Butter Pav Bhaji', price: 120, description: 'Classic pav bhaji with extra butter.', image: 'Butter Pav Bhaji.webp', category: 'Pav Bhaji', searchTerms: ['butter', 'pav', 'bhaji', 'mumbai', 'street food'] },
+            { id: 29, name: 'Cheese Pav Bhaji', price: 150, description: 'Pav bhaji topped with melted cheese.', image: 'Cheese Pav Bhaji.webp', category: 'Pav Bhaji', searchTerms: ['cheese', 'pav', 'bhaji', 'mumbai', 'street food'] },
+            { id: 30, name: 'Paneer Pav Bhaji', price: 150, description: 'Pav bhaji with soft paneer cubes.', image: 'Paneer Pav Bhaji.webp', category: 'Pav Bhaji', searchTerms: ['paneer', 'pav', 'bhaji', 'mumbai', 'street food'] },
+            { id: 31, name: 'Ex Bun', price: 10, description: 'Extra buttered pav.', image: 'Ex Bun.webp', category: 'Pav Bhaji', searchTerms: ['extra', 'bun', 'pav'] },
+
+            // CHHOLE SPECIAL
+            { id: 32, name: 'Chhole Bhature', price: 160, description: 'Spicy chickpea curry with fluffy fried bread.', image: 'Chhole Bhature.webp', category: 'Chhole Special', searchTerms: ['chhole', 'bhature', 'punjabi', 'main course', 'chickpea'] },
+            { id: 33, name: 'Chhole Kulcha', price: 200, description: 'Chickpea curry with tandoor baked bread.', image: 'Chhole Kulcha.webp', category: 'Chhole Special', searchTerms: ['chhole', 'kulcha', 'punjabi', 'main course'] },
+            { id: 34, name: 'Chhole Masala', price: 150, description: 'Spicy chickpea curry.', image: 'Chhole Masala.webp', category: 'Chhole Special', searchTerms: ['chhole', 'masala', 'punjabi', 'curry'] },
+            { id: 35, name: 'Cheese Chhole Masala', price: 180, description: 'Chhole masala topped with cheese.', image: 'Cheese Chhole Masala.webp', category: 'Chhole Special', searchTerms: ['cheese', 'chhole', 'masala', 'punjabi', 'curry'] },
+            { id: 36, name: 'Chhole Paneer Masala', price: 220, description: 'Chickpeas and paneer in spicy gravy.', image: 'Chhole Paneer Masala.webp', category: 'Chhole Special', searchTerms: ['paneer', 'chhole', 'masala', 'punjabi', 'curry'] },
+            { id: 37, name: 'Sizzling Chhole Bhature / Kulcha', price: 250, description: 'Chhole served on a sizzling platter.', image: 'Sizzling Chhole Bhature.webp', category: 'Chhole Special', searchTerms: ['sizzling', 'chhole', 'bhature', 'kulcha'] },
+
+            // CHINESE DRY & GRAVY SPECIAL
+            { id: 38, name: 'Dry Manchurian', price: 150, description: 'Fried veg balls in spicy sauce.', image: 'Dry Manchurian.webp', category: 'Chinese Special', searchTerms: ['manchurian', 'dry', 'chinese', 'starter'] },
+            { id: 39, name: 'Gravy Manchurian', price: 140, description: 'Veg balls in savory gravy.', image: 'Gravy Manchurian.webp', category: 'Chinese Special', searchTerms: ['manchurian', 'gravy', 'chinese', 'main course'] },
+            { id: 40, name: 'Paneer Chilli', price: 220, description: 'Fried paneer in spicy chilli sauce.', image: 'Paneer Chilli.webp', category: 'Chinese Special', searchTerms: ['paneer', 'chilli', 'chinese', 'starter', 'spicy'] },
+            { id: 41, name: 'Paneer Chilli Gravy', price: 220, description: 'Paneer cubes in spicy gravy.', image: 'Paneer Chilli Gravy.webp', category: 'Chinese Special', searchTerms: ['paneer', 'chilli', 'gravy', 'chinese', 'main course'] },
+            { id: 42, name: 'Veg Crispy', price: 180, description: 'Crispy fried vegetables in tangy sauce.', image: 'Veg Crispy.webp', category: 'Chinese Special', searchTerms: ['veg', 'crispy', 'chinese', 'starter'] },
+            { id: 43, name: 'Hooney Chilli Potato', price: 200, description: 'Crispy potatoes in honey chilli sauce.', image: 'Hooney Chilli Potato.webp', category: 'Chinese Special', searchTerms: ['honey', 'chilli', 'potato', 'chinese', 'starter'] },
+            { id: 44, name: 'Paneer 65', price: 240, description: 'Spicy deep-fried paneer dish.', image: 'Paneer 65.webp', category: 'Chinese Special', searchTerms: ['paneer 65', 'spicy', 'starter'] },
+            { id: 45, name: 'Sp. Sizzling Dragon Paneer', price: 320, description: 'Fiery paneer on a hot plate.', image: 'Sp. Sizzling Dragon Paneer.webp', category: 'Chinese Special', searchTerms: ['sizzling', 'dragon', 'paneer', 'spicy', 'starter'] },
+            { id: 46, name: 'Sizzling Bhel', price: 270, description: 'Crunchy Chinese bhel on sizzling platter.', image: 'Sizzling Bhel.webp', category: 'Chinese Special', searchTerms: ['sizzling', 'bhel', 'chinese', 'fusion', 'starter'] },
+            
+            // NOODLES
+            { id: 47, name: 'Hakka Noodles', price: 140, description: 'Classic stir-fried noodles with veggies.', image: 'Hakka Noodles.webp', category: 'Noodles', searchTerms: ['hakka', 'noodles', 'chinese', 'main course'] },
+            { id: 48, name: 'Sez Noodles', price: 160, description: 'Spicy noodles in Schezwan sauce.', image: 'Sez Noodles.webp', category: 'Noodles', searchTerms: ['sez', 'schezwan', 'noodles', 'chinese', 'spicy'] },
+            { id: 49, name: 'Manchurian Noodles', price: 160, description: 'Noodles with vegetable manchurian balls.', image: 'Manchurian Noodles.webp', category: 'Noodles', searchTerms: ['manchurian', 'noodles', 'chinese'] },
+            { id: 50, name: 'Singapuri Noodles', price: 180, description: 'Vermicelli noodles with curry flavor.', image: 'Singapuri Noodles.webp', category: 'Noodles', searchTerms: ['singapuri', 'noodles', 'chinese', 'curry'] },
+            { id: 51, name: 'Chinese Bhel', price: 180, description: 'Crunchy fried noodles and veggies.', image: 'Chinese Bhel.webp', category: 'Noodles', searchTerms: ['chinese', 'bhel', 'starter'] },
+            { id: 52, name: 'Chilli Garlic Paper Noodles', price: 180, description: 'Spicy noodles with chili and garlic.', image: 'Chilli Garlic Paper Noodles.webp', category: 'Noodles', searchTerms: ['chilli', 'garlic', 'noodles', 'spicy'] },
+            
+            // RICE (Chinese)
+            { id: 53, name: 'Fried Rice', price: 130, description: 'Stir-fried rice with vegetables.', image: 'Fried Rice.webp', category: 'Rice', searchTerms: ['fried rice', 'rice', 'chinese'] },
+            { id: 54, name: 'Sez Rice', price: 150, description: 'Spicy fried rice with Schezwan sauce.', image: 'Sez Rice.webp', category: 'Rice', searchTerms: ['sez', 'schezwan', 'fried rice', 'rice', 'spicy'] },
+            { id: 55, name: 'Manchurian Rice', price: 150, description: 'Fried rice with manchurian gravy.', image: 'Manchurian Rice.webp', category: 'Rice', searchTerms: ['manchurian', 'fried rice', 'rice'] },
+            { id: 56, name: 'Singapuri Rice', price: 160, description: 'Fried rice with curry flavor.', image: 'Singapuri Rice.webp', category: 'Rice', searchTerms: ['singapuri', 'fried rice', 'rice', 'curry'] },
+
+            // FRENCH FRIES
+            { id: 57, name: 'Plain Fries', price: 90, description: 'Classic salted french fries.', image: 'Plain Fries.webp', category: 'French Fries', searchTerms: ['french fries', 'fries', 'potato', 'side'] },
+            { id: 58, name: 'Salted Fries', price: 100, description: 'Crispy fries seasoned with salt.', image: 'Salted Fries.webp', category: 'French Fries', searchTerms: ['salted', 'french fries', 'fries', 'potato', 'side'] },
+            { id: 59, name: 'Masala Fries', price: 120, description: 'Fries tossed in Indian spices.', image: 'Masala Fries.webp', category: 'French Fries', searchTerms: ['masala', 'french fries', 'fries', 'potato', 'side', 'spicy'] },
+
+            // SABJI SPECIAL
+            { id: 60, name: 'Veg Kadai', price: 200, description: 'Assorted veg in spicy kadai gravy.', image: 'Veg Kadai.webp', category: 'Sabji Special', searchTerms: ['veg', 'kadai', 'sabji', 'main course', 'punjabi'] },
+            { id: 61, name: 'Punjabi Kadai', price: 220, description: 'Mixed veg in spicy Punjabi gravy.', image: 'Punjabi Kadai.webp', category: 'Sabji Special', searchTerms: ['punjabi', 'kadai', 'sabji', 'main course'] },
+            { id: 62, name: 'Veg Kolahpuri', price: 230, description: 'Spicy mixed vegetable curry.', image: 'Veg Kolahpuri.webp', category: 'Sabji Special', searchTerms: ['veg', 'kolhapuri', 'sabji', 'main course', 'spicy'] },
+            { id: 63, name: 'Deewani Handi', price: 240, description: 'Rich creamy mixed vegetable curry.', image: 'Deewani Handi.webp', category: 'Sabji Special', searchTerms: ['deewani', 'handi', 'veg', 'sabji', 'main course', 'creamy'] },
+            { id: 64, name: 'Veg Angara', price: 270, description: 'Smoky and spicy mixed veg dish.', image: 'Veg Angara.webp', category: 'Sabji Special', searchTerms: ['veg', 'angara', 'smoky', 'spicy', 'sabji', 'main course'] },
+            { id: 65, name: 'Mix Veg', price: 200, description: 'Curry with fresh seasonal vegetables.', image: 'Mix Veg.webp', category: 'Sabji Special', searchTerms: ['mix veg', 'sabji', 'main course'] },
+
+            // CHEESE SPECIAL
+            { id: 66, name: 'Cheese Butter Masala', price: 270, description: 'Cheese in creamy tomato butter gravy.', image: 'Cheese Butter Masala.webp', category: 'Cheese Special', searchTerms: ['cheese', 'butter', 'masala', 'sabji', 'creamy'] },
+            { id: 67, name: 'Cheese Paneer Masala', price: 290, description: 'Cheese and paneer in spiced gravy.', image: 'Cheese Paneer Masala.webp', category: 'Cheese Special', searchTerms: ['cheese', 'paneer', 'masala', 'sabji'] },
+            { id: 68, name: 'Cheese Kaju Masala', price: 300, description: 'Cashews and cheese in creamy gravy.', image: 'Cheese Kaju Masala.webp', category: 'Cheese Special', searchTerms: ['cheese', 'kaju', 'cashew', 'masala', 'sabji', 'rich'] },
+            { id: 69, name: 'Cheese Kaju Paneer Masala', price: 320, description: 'Rich curry with cheese, cashews, and paneer.', image: 'Cheese Kaju Paneer Masala.webp', category: 'Cheese Special', searchTerms: ['cheese', 'kaju', 'paneer', 'masala', 'sabji'] },
+            { id: 70, name: 'Sizzling Cheese Angara', price: 350, description: 'Smoky spicy cheese curry sizzling.', image: 'Sizzling Cheese Angara.webp', category: 'Cheese Special', searchTerms: ['sizzling', 'cheese', 'angara', 'smoky', 'spicy'] },
+
+            // DAL SPECIAL
+            { id: 71, name: 'Dal Fry', price: 150, description: 'Yellow lentils tempered with spices.', image: 'Dal Fry.webp', category: 'Dal Special', searchTerms: ['dal', 'fry', 'lentils', 'main course'] },
+            { id: 72, name: 'Dal Tadka', price: 170, description: 'Lentils with extra spicy tempering.', image: 'Dal Tadka.webp', category: 'Dal Special', searchTerms: ['dal', 'tadka', 'lentils', 'main course', 'punjabi'] },
+            { id: 73, name: 'Dal Makhani', price: 170, description: 'Black lentils with butter and cream.', image: 'Dal Makhani.webp', category: 'Dal Special', searchTerms: ['dal', 'makhani', 'lentils', 'main course', 'creamy'] },
+            { id: 74, name: 'Dal Makhani Tadka', price: 190, description: 'Dal Makhani with extra tempering.', image: 'Dal Makhani Tadka.webp', category: 'Dal Special', searchTerms: ['dal', 'makhani', 'tadka', 'lentils'] },
+            { id: 75, name: 'Ex Tadka', price: 30, description: 'Extra tempering side.', image: 'Ex Tadka.webp', category: 'Dal Special', searchTerms: ['extra', 'tadka', 'tempering'] },
+
+            // NAWABO KI BIRYANI
+            { id: 76, name: 'Dum Matka Biryani', price: 240, description: 'Slow-cooked biryani in clay pot.', image: 'Dum Matka Biryani.webp', category: 'Nawabo ki Biryani', searchTerms: ['dum', 'matka', 'biryani', 'rice', 'slow cooked'] },
+            { id: 77, name: 'Paneer Tikka Biryani', price: 260, description: 'Biryani with grilled paneer tikka.', image: 'Paneer Tikka Biryani.webp', category: 'Nawabo ki Biryani', searchTerms: ['paneer', 'tikka', 'biryani', 'rice'] },
+            { id: 78, name: 'Hydrabadi Biryani', price: 240, description: 'Spicy aromatic Hyderabadi biryani.', image: 'Hydrabadi Biryani.webp', category: 'Nawabo ki Biryani', searchTerms: ['hydrabadi', 'biryani', 'rice', 'spicy'] },
+            { id: 79, name: 'Luckhnowi Biryani', price: 260, description: 'Aromatic Awadhi style biryani.', image: 'Luckhnowi Biryani.webp', category: 'Nawabo ki Biryani', searchTerms: ['luckhnowi', 'biryani', 'rice', 'awadhi'] },
+            { id: 80, name: 'Smokey Biryani', price: 330, description: 'Biryani infused with charcoal smoke.', image: 'Smokey Biryani.webp', category: 'Nawabo ki Biryani', searchTerms: ['smokey', 'biryani', 'rice'] },
+            { id: 81, name: 'Special Sizzling Biryani', price: 400, description: 'House special biryani on sizzling plate.', image: 'Special Sizzling Biryani.webp', category: 'Nawabo ki Biryani', searchTerms: ['sizzling', 'biryani', 'rice', 'special'] },
+
+            // PANEER SPECIAL
+            { id: 82, name: 'Paneer Butter Masala', price: 220, description: 'Paneer in creamy tomato butter gravy.', image: 'Paneer Butter Masala.webp', category: 'Paneer Special', searchTerms: ['paneer', 'butter', 'masala', 'sabji', 'creamy'] },
+            { id: 83, name: 'Kadai Paneer', price: 210, description: 'Paneer with peppers in spicy masala.', image: 'Kadai Paneer.webp', category: 'Paneer Special', searchTerms: ['kadai', 'paneer', 'sabji', 'spicy'] },
+            { id: 84, name: 'Paneer Tikka Masala', price: 260, description: 'Grilled paneer in spicy gravy.', image: 'Paneer Tikka Masala.webp', category: 'Paneer Special', searchTerms: ['paneer', 'tikka', 'masala', 'sabji'] },
+            { id: 85, name: 'Paneer Angara', price: 280, description: 'Smoky and spicy paneer curry.', image: 'Paneer Angara.webp', category: 'Paneer Special', searchTerms: ['paneer', 'angara', 'smoky', 'spicy', 'sabji'] },
+            { id: 86, name: 'Tawa Paneer', price: 220, description: 'Semi-dry paneer on griddle.', image: 'Tawa Paneer.webp', category: 'Paneer Special', searchTerms: ['tawa', 'paneer', 'sabji'] },
+            { id: 87, name: 'Paneer Bhurji', price: 240, description: 'Scrambled paneer with spices.', image: 'Paneer Bhurji.webp', category: 'Paneer Special', searchTerms: ['paneer', 'bhurji', 'scrambled', 'sabji'] },
+            { id: 88, name: 'Paneer Toofani', price: 240, description: 'Robust and spicy paneer curry.', image: 'Paneer Toofani.webp', category: 'Paneer Special', searchTerms: ['paneer', 'toofani', 'spicy', 'sabji'] },
+            { id: 89, name: 'Paneer Peshwari', price: 260, description: 'Rich paneer with nuts and spices.', image: 'Paneer Peshwari.webp', category: 'Paneer Special', searchTerms: ['paneer', 'peshwari', 'rich', 'sabji'] },
+            { id: 90, name: 'Paneer Lababdar', price: 260, description: 'Creamy, tangy and sweet paneer gravy.', image: 'Paneer Lababdar.webp', category: 'Paneer Special', searchTerms: ['paneer', 'lababdar', 'creamy', 'sabji'] },
+            { id: 91, name: 'Shahi Paneer', price: 250, description: 'Royal creamy Mughlai paneer.', image: 'Shahi Paneer.webp', category: 'Paneer Special', searchTerms: ['shahi', 'paneer', 'mughlai', 'creamy', 'sabji'] },
+            { id: 92, name: 'Palak Paneer', price: 230, description: 'Paneer in smooth spinach gravy.', image: 'Palak Paneer.webp', category: 'Paneer Special', searchTerms: ['palak', 'paneer', 'spinach', 'sabji', 'healthy'] },
+            { id: 93, name: 'Sizzling Lababdar', price: 300, description: 'Paneer Lababdar on sizzling platter.', image: 'Sizzling Lababdar.webp', category: 'Paneer Special', searchTerms: ['sizzling', 'paneer', 'lababdar', 'sabji'] },
+            { id: 94, name: 'Paneer Agnipath', price: 450, description: 'Extremely spicy paneer dish.', image: 'Paneer Agnipath.webp', category: 'Paneer Special', searchTerms: ['paneer', 'agnipath', 'spicy', 'hot', 'sabji'] },
+
+            // KAJU SPECIAL
+            { id: 95, name: 'Kaju Masala', price: 270, description: 'Roasted cashews in rich gravy.', image: 'Kaju Masala.webp', category: 'Kaju Special', searchTerms: ['kaju', 'cashew', 'masala', 'curry', 'sabji', 'rich'] },
+            { id: 96, name: 'Kaju Curry', price: 260, description: 'Creamy cashew curry.', image: 'Kaju Curry.webp', category: 'Kaju Special', searchTerms: ['kaju', 'cashew', 'curry', 'sabji'] },
+            { id: 97, name: 'Kaju Paneer', price: 280, description: 'Cashews and paneer in rich curry.', image: 'Kaju Paneer.webp', category: 'Kaju Special', searchTerms: ['kaju', 'cashew', 'paneer', 'sabji'] },
+
+            // SIZZLERS
+            { id: 98, name: 'Hamari Pahechan', price: 700, description: 'Platter: Paneer Chilli, Noodles, Pasta, etc.', image: 'Hamari Pahechan Sizzler.webp', category: 'Sizzlers', searchTerms: ['sizzler', 'platter', 'special', 'paneer', 'noodles', 'pasta'] },
+            { id: 99, name: 'Chinese Blast', price: 550, description: 'Chinese favorites sizzler platter.', image: 'Chinese Blast Sizzler.webp', category: 'Sizzlers', searchTerms: ['sizzler', 'chinese', 'manchurian', 'fried rice', 'noodles'] },
+            { id: 100, name: 'Sab Se Alag', price: 500, description: 'Unique sizzler with cutlet, rice, etc.', image: 'Sab Se Alag Sizzler.webp', category: 'Sizzlers', searchTerms: ['sizzler', 'unique', 'stuffed', 'cutlet'] },
+            { id: 101, name: 'Kuch Aesa Bhi', price: 600, description: 'Sizzler with Noodles, Pasta, Paneer.', image: 'Kuch Aesa Bhi Sizzler.webp', category: 'Sizzlers', searchTerms: ['sizzler', 'special', 'noodles', 'pasta', 'paneer'] },
+            { id: 102, name: 'Sab Ki Pasand', price: 650, description: 'Crowd-pleasing sizzler platter.', image: 'Sab Ki Pasand Sizzler.webp', category: 'Sizzlers', searchTerms: ['sizzler', 'favorite', 'manchurian', 'pasta', 'paneer tikka'] },
+
+            // PAPAD
+            { id: 103, name: 'Roasted Papad', price: 15, description: 'Roasted crispy lentil wafer.', image: 'Roasted Papad.webp', category: 'Papad', searchTerms: ['papad', 'roasted', 'side', 'starter'] },
+            { id: 104, name: 'Fry Papad', price: 30, description: 'Deep fried crispy wafer.', image: 'Fry Papad.webp', category: 'Papad', searchTerms: ['papad', 'fried', 'side', 'starter'] },
+            { id: 105, name: 'Masala Papad', price: 40, description: 'Papad topped with onion tomato mix.', image: 'Masala Papad.webp', category: 'Papad', searchTerms: ['papad', 'masala', 'side', 'starter', 'chaat'] },
+            { id: 106, name: 'Roasted Cheese Papad', price: 50, description: 'Roasted papad with cheese.', image: 'Roasted Cheese Papad.webp', category: 'Papad', searchTerms: ['papad', 'roasted', 'cheese', 'side', 'starter'] },
+            { id: 107, name: 'Fry Cheese Papad', price: 70, description: 'Fried papad with cheese.', image: 'Fry Cheese Papad.webp', category: 'Papad', searchTerms: ['papad', 'fried', 'cheese', 'side', 'starter'] },
+            { id: 108, name: 'Cheese Masala Papad', price: 80, description: 'Papad with masala and cheese.', image: 'Cheese Masala Papad.webp', category: 'Papad', searchTerms: ['papad', 'cheese', 'masala', 'side', 'starter'] },
+
+            // DRINKS & ADD ON
+            { id: 109, name: 'Cold Drink', price: 20, description: 'Carbonated soft drinks.', image: 'Cold Drink.webp', category: 'Drinks & Add On', searchTerms: ['cold drink', 'soda', 'beverage'] },
+            { id: 110, name: 'Mineral Water', price: 20, description: 'Packaged drinking water.', image: 'Mineral Water.webp', category: 'Drinks & Add On', searchTerms: ['water', 'mineral', 'beverage'] },
+            { id: 111, name: 'Butter Milk', price: 30, description: 'Refreshing spiced yogurt drink.', image: 'Butter Milk.webp', category: 'Drinks & Add On', searchTerms: ['butter milk', 'chaas', 'beverage', 'yogurt'] },
+            { id: 112, name: 'Ex Raita', price: 20, description: 'Side of yogurt dip.', image: 'Ex Raita.webp', category: 'Drinks & Add On', searchTerms: ['raita', 'yogurt', 'side', 'add on'] },
+            { id: 113, name: 'Ex Cheese', price: 40, description: 'Extra cheese serving.', image: 'Ex Cheese.webp', category: 'Drinks & Add On', searchTerms: ['extra', 'cheese', 'add on'] },
+            { id: 114, name: 'Curd', price: 20, description: 'Fresh plain yogurt.', image: 'Curd.webp', category: 'Drinks & Add On', searchTerms: ['curd', 'yogurt', 'dahi'] },
+
+            // RICE & PULAV
+            { id: 115, name: 'Stem Rice', price: 100, description: 'Steamed basmati rice.', image: 'Stem Rice.webp', category: 'Rice & Pulav', searchTerms: ['stem', 'steamed', 'plain', 'rice'] },
+            { id: 116, name: 'Jeera Rice', price: 120, description: 'Rice flavored with cumin seeds.', image: 'Jeera Rice.webp', category: 'Rice & Pulav', searchTerms: ['jeera', 'rice', 'basmati'] },
+            { id: 117, name: 'Veg Pulav', price: 150, description: 'Rice cooked with mixed veggies.', image: 'Veg Pulav.webp', category: 'Rice & Pulav', searchTerms: ['veg', 'pulav', 'pulao', 'rice'] },
+            { id: 118, name: 'Paneer Pulav', price: 170, description: 'Rice with paneer and spices.', image: 'Paneer Pulav.webp', category: 'Rice & Pulav', searchTerms: ['paneer', 'pulav', 'pulao', 'rice'] },
+            { id: 119, name: 'Masala Pulav', price: 150, description: 'Spicy rice with veggies.', image: 'Masala Pulav.webp', category: 'Rice & Pulav', searchTerms: ['masala', 'pulav', 'pulao', 'rice', 'spicy'] },
+            { id: 120, name: 'Kaju Paneer Pulav', price: 180, description: 'Rich pulav with cashew and paneer.', image: 'Kaju Paneer Pulav.webp', category: 'Rice & Pulav', searchTerms: ['kaju', 'paneer', 'pulav', 'pulao', 'rice'] },
+            { id: 121, name: 'Cheese Butter Pulav', price: 200, description: 'Pulav with butter and cheese.', image: 'Cheese Butter Pulav.webp', category: 'Rice & Pulav', searchTerms: ['cheese', 'butter', 'pulav', 'pulao', 'rice'] },
+            { id: 122, name: 'Dal Khichdi', price: 180, description: 'Comforting rice and lentil dish.', image: 'Dal Khichdi.webp', category: 'Rice & Pulav', searchTerms: ['dal', 'khichdi', 'rice', 'healthy', 'comfort food'] },
+
+            // ROTI SPECIAL
+            { id: 123, name: 'Chapati', price: 12, description: 'Whole wheat flatbread.', image: 'Chapati.webp', category: 'Roti Special', searchTerms: ['chapati', 'roti', 'bread'] },
+            { id: 124, name: 'Butter Chapati', price: 15, description: 'Chapati with butter.', image: 'Butter Chapati.webp', category: 'Roti Special', searchTerms: ['butter', 'chapati', 'roti'] },
+            { id: 125, name: 'Tandoori Roti', price: 20, description: 'Clay oven baked flatbread.', image: 'Tandoori Roti.webp', category: 'Roti Special', searchTerms: ['tandoori', 'roti', 'bread'] },
+            { id: 126, name: 'Butter Tandoori Roti', price: 25, description: 'Tandoori roti with butter.', image: 'Butter Tandoori Roti.webp', category: 'Roti Special', searchTerms: ['butter', 'tandoori', 'roti'] },
+            { id: 127, name: 'Naan', price: 40, description: 'Soft leavened flatbread.', image: 'Naan.webp', category: 'Roti Special', searchTerms: ['naan', 'bread', 'tandoori'] },
+            { id: 128, name: 'Butter Naan', price: 50, description: 'Naan with butter.', image: 'Butter Naan.webp', category: 'Roti Special', searchTerms: ['butter', 'naan', 'bread'] },
+            { id: 129, name: 'Kulcha', price: 60, description: 'Soft mild leavened bread.', image: 'Kulcha.webp', category: 'Roti Special', searchTerms: ['kulcha', 'bread'] },
+            { id: 130, name: 'Butter Kulcha', price: 70, description: 'Kulcha with butter.', image: 'Butter Kulcha.webp', category: 'Roti Special', searchTerms: ['butter', 'kulcha', 'bread'] },
+            { id: 131, name: 'Laccha Paratha', price: 60, description: 'Layered wheat flatbread.', image: 'Laccha Paratha.webp', category: 'Roti Special', searchTerms: ['laccha', 'paratha', 'layered', 'bread'] },
+            { id: 132, name: 'Butter Laccha Paratha', price: 70, description: 'Layered paratha with butter.', image: 'Butter Laccha Paratha.webp', category: 'Roti Special', searchTerms: ['butter', 'laccha', 'paratha'] },
+            { id: 133, name: 'Garlic Naan', price: 60, description: 'Naan flavored with garlic.', image: 'Garlic Naan.webp', category: 'Roti Special', searchTerms: ['garlic', 'naan', 'bread'] },
+            { id: 134, name: 'Butter Garlic Naan', price: 70, description: 'Garlic naan with butter.', image: 'Butter Garlic Naan.webp', category: 'Roti Special', searchTerms: ['butter', 'garlic', 'naan'] },
+            { id: 135, name: 'Stuffed Cheese Naan', price: 160, description: 'Naan stuffed with cheese.', image: 'Stuffed Cheese Naan.webp', category: 'Roti Special', searchTerms: ['stuffed', 'cheese', 'naan'] },
+            { id: 136, name: 'Butter Stuffed Cheese Naan', price: 180, description: 'Cheese naan with butter.', image: 'Butter Stuffed Cheese Naan.webp', category: 'Roti Special', searchTerms: ['butter', 'stuffed', 'cheese', 'naan'] },
+            { id: 137, name: 'Cheese Garlic Naan', price: 180, description: 'Cheese and garlic naan.', image: 'Cheese Garlic Naan.webp', category: 'Roti Special', searchTerms: ['cheese', 'garlic', 'naan'] },
+            { id: 138, name: 'Butter Cheese Garlic Naan', price: 200, description: 'Cheese garlic naan with butter.', image: 'Butter Cheese Garlic Naan.webp', category: 'Roti Special', searchTerms: ['butter', 'cheese', 'garlic', 'naan'] },
+            { id: 139, name: 'Stuffed Paneer Kulcha', price: 150, description: 'Kulcha stuffed with paneer.', image: 'Stuffed Paneer Kulcha.webp', category: 'Roti Special', searchTerms: ['stuffed', 'paneer', 'kulcha'] },
+            { id: 140, name: 'Butter Stuffed Paneer Kulcha', price: 170, description: 'Paneer kulcha with butter.', image: 'Butter Stuffed Paneer Kulcha.webp', category: 'Roti Special', searchTerms: ['butter', 'stuffed', 'paneer', 'kulcha'] },
+            { id: 141, name: 'Cheese Kulcha', price: 180, description: 'Kulcha stuffed with cheese.', image: 'Cheese Kulcha.webp', category: 'Roti Special', searchTerms: ['cheese', 'kulcha', 'stuffed'] },
+            { id: 142, name: 'Butter Cheese Kulcha', price: 200, description: 'Cheese kulcha with butter.', image: 'Butter Cheese Kulcha.webp', category: 'Roti Special', searchTerms: ['butter', 'cheese', 'kulcha'] },
+            { id: 143, name: 'Cheese Paneer Kulcha', price: 200, description: 'Kulcha with cheese and paneer.', image: 'Cheese Paneer Kulcha.webp', category: 'Roti Special', searchTerms: ['cheese', 'paneer', 'kulcha', 'stuffed'] },
+            { id: 144, name: 'Butter Cheese Paneer Kulcha', price: 220, description: 'Rich kulcha with butter.', image: 'Butter Cheese Paneer Kulcha.webp', category: 'Roti Special', searchTerms: ['butter', 'cheese', 'paneer', 'kulcha'] },
+            
+            // PARATHA
+            { id: 145, name: 'Aloo Paratha', price: 100, description: 'Stuffed potato flatbread.', image: 'Aloo Paratha.webp', category: 'Paratha', searchTerms: ['aloo', 'paratha', 'bread', 'stuffed'] },
+            { id: 146, name: 'Paneer Paratha', price: 150, description: 'Stuffed paneer flatbread.', image: 'Paneer Paratha.webp', category: 'Paratha', searchTerms: ['paneer', 'paratha', 'bread', 'stuffed'] },
+            { id: 147, name: 'Cheese Aloo Paratha', price: 140, description: 'Potato and cheese paratha.', image: 'Cheese Aloo Paratha.webp', category: 'Paratha', searchTerms: ['cheese', 'aloo', 'paratha', 'bread', 'stuffed'] },
+            { id: 148, name: 'Mix - Veg Paratha', price: 140, description: 'Mixed vegetable paratha.', image: 'Mix - Veg Paratha.webp', category: 'Paratha', searchTerms: ['mix veg', 'paratha', 'bread', 'stuffed'] },
+        ];
+
+
+        const popularSearches = ['Paneer Tikka', 'Masala Chaap', 'Sizzler', 'Dal Makhani', 'Biryani', 'Pav Bhaji'];
+        const searchSuggestions = [...new Set(MENU.flatMap(item => [item.name, ...item.searchTerms, item.category]))];
+        
+        const categoryImages = {
+            'All': 'Paneer Butter Masala.webp',
+            'Soup': 'Manchow Soup.webp',
+            'BBQ': 'Paneer Tikka.webp',
+            'Chaap': 'Masala Chaap.webp',
+            'Momos': 'Fry Momos.webp',
+            'Pasta': 'Red Sauce Pasta.webp',
+            'Pav Bhaji': 'Pav Bhaji.webp',
+            'Chhole Special': 'Chhole Bhature.webp',
+            'Chinese Special': 'Paneer Chilli.webp',
+            'Noodles': 'Hakka Noodles.webp',
+            'Rice': 'Fried Rice.webp',
+            'French Fries': 'Masala Fries.webp',
+            'Sabji Special': 'Veg Kadai.webp',
+            'Cheese Special': 'Cheese Butter Masala.webp',
+            'Dal Special': 'Dal Makhani.webp',
+            'Nawabo ki Biryani': 'Dum Matka Biryani.webp',
+            'Paneer Special': 'Paneer Butter Masala.webp',
+            'Kaju Special': 'Kaju Masala.webp',
+            'Sizzlers': 'Hamari Pahechan Sizzler.webp',
+            'Papad': 'Masala Papad.webp',
+            'Drinks & Add On': 'Mineral Water.webp',
+            'Rice & Pulav': 'Veg Pulav.webp',
+            'Roti Special': 'Tandoori Roti.webp',
+            'Paratha': 'Aloo Paratha.webp'
+        };
+
+
+        // --- STATE MANAGEMENT ---
+        let state = {
+            showSplash: true,
+            cart: {},
+            isCartOpen: false,
+            isSearchOpen: false,
+            message: null,
+            activeCategory: 'All',
+            searchResults: null,
+            searchQueryDisplay: '',
+            isCategoryModalOpen: false,
+            isFloatingCategoryButtonVisible: false,
+            isFloatingCartButtonVisible: false,
+            lastAddedItem: null,
+            notificationKey: 0,
+            selectedItem: null,
+            isAddressModalOpen: false
+        };
+
+        const root = document.getElementById('root');
+
+        // --- RENDER FUNCTIONS ---
+
+        const SplashScreen = () => `
+            <div id="splash-screen" class="fixed top-0 left-0 w-screen h-screen bg-[#f2e3e3] flex justify-center items-center z-[1000] splash-enter-active">
+                <div class="flex justify-center items-center h-full w-full p-4 max-w-full logo-animation">
+                    <img src="Logo2.png" alt="Nai Bahu Logo" class="max-w-[80%] max-h-[50vh] h-auto block" />
+                </div>
+            </div>
+        `;
+
+        const Header = ({ cartCount }) => `
+            <header class="sticky top-0 z-40 shadow-md text-white w-full bg-[#A40046]">
+                <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+                    <a href="#" class="flex items-center space-x-2 flex-shrink-0">
+                        <img src="naibahu.png" alt="Logo" class="h-10 w-auto" />
+                        <div class="flex flex-col">
+                            <span class="font-bold text-lg royal-font leading-tight">NAई बहु</span>
+                            <span class="text-[10px] uppercase tracking-widest opacity-80">Home Delivery</span>
+                        </div>
+                    </a>
+                    <div class="flex items-center space-x-3">
+                        <button id="search-btn" class="p-2.5 rounded-full hover:bg-[#830038] transition-colors">
+                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </button>
+                        <button id="cart-btn" class="relative p-2.5 rounded-full hover:bg-[#830038] transition-colors">
+                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                            ${cartCount > 0 ? `<span class="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-green-500 border-2 border-[#A40046] rounded-full">${cartCount}</span>` : ''}
+                        </button>
+                    </div>
+                </nav>
+            </header>
+        `;
+
+        const MenuItemCard = ({ item }) => `
+            <div class="menu-item-card bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full transform transition-all duration-200 cursor-pointer hover:shadow-lg" data-item-id="${item.id}">
+                <div class="p-4 flex gap-4 items-start">
+                    <div class="flex-grow flex flex-col min-w-0">
+                        <h3 class="text-lg font-bold text-gray-800 royal-font leading-snug mb-1">${item.name}</h3>
+                        <p class="text-gray-500 text-xs sm:text-sm mb-2 line-clamp-2">${item.description}</p>
+                        <span class="font-bold text-gray-800 text-lg mt-auto">₹${item.price}</span>
+                    </div>
+                    <div class="relative flex-shrink-0 w-28 h-28 sm:w-32 sm:h-32">
+                         <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover rounded-xl menu-item-image" loading="lazy">
+                         <button class="add-to-cart-btn absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white text-[#A40046] border border-[#A40046] px-5 py-1.5 rounded-lg font-bold shadow-md hover:bg-[#A40046] hover:text-white text-sm transition-colors uppercase tracking-wide" data-item-id="${item.id}">
+                            ADD
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const CategorySlider = ({ activeCategory }) => {
+            const categories = ['All', ...Object.keys(categoryImages).filter(c => c !== 'All')];
+            return `
+                <div class="col-span-1 md:col-span-2 my-8">
+                    <h3 class="text-xl font-bold royal-font mb-4 text-gray-800 px-2">Inspiration for your first order</h3>
+                    <div class="category-slider-container flex items-center gap-6 overflow-x-auto pb-6 px-2">
+                        ${categories.map(category => `
+                            <div class="category-slider-item flex-shrink-0 w-32 flex flex-col items-center cursor-pointer group" data-category="${category}">
+                                <div class="w-28 h-28 rounded-full overflow-hidden shadow-md border-2 ${activeCategory === category ? 'border-[#A40046]' : 'border-transparent'}">
+                                    <img src="${categoryImages[category]}" alt="${category}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" loading="lazy"/>
+                                </div>
+                                <h4 class="mt-3 text-gray-700 font-medium text-sm text-center ${activeCategory === category ? 'text-[#A40046] font-bold' : ''}">${category}</h4>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
+        const MenuSection = ({ activeCategory, searchResults, searchQueryDisplay, filteredMenu }) => {
+            const itemsToDisplay = searchResults !== null ? searchResults : filteredMenu;
+            
+            const menuItemsHtml = itemsToDisplay.reduce((acc, item, index) => {
+                // Insert slider at the top for All category or standard view
+                if (index === 0 && searchResults === null) {
+                   acc.push(CategorySlider({ activeCategory }));
+                }
+                acc.push(MenuItemCard({ item }));
+                return acc;
+            }, []).join('');
+            
+            // If filtered or search results and empty, render slider at top still if no items
+            let sliderHtml = '';
+             if (itemsToDisplay.length === 0 && searchResults === null) {
+                 sliderHtml = CategorySlider({ activeCategory });
+            }
+
+
+            return `
+                <div class="lg:col-span-2 pb-20">
+                    ${searchResults !== null ? `
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold royal-font text-gray-800">Search Results for "${searchQueryDisplay}"</h2>
+                            <button id="clear-search-btn" class="text-sm text-[#A40046] font-medium hover:underline">Clear Search</button>
+                        </div>
+                    ` : ``}
+                    
+                    ${itemsToDisplay.length > 0 ? `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            ${menuItemsHtml}
+                        </div>
+                    ` : `
+                        ${sliderHtml}
+                        <div class="text-center py-20 px-4">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png" class="w-24 h-24 mx-auto mb-4 opacity-50" alt="No items">
+                            <p class="text-xl text-gray-500 royal-font">No items found for "${searchQueryDisplay}"</p>
+                            <button id="reset-search-btn" class="mt-4 text-[#A40046] font-bold">Browse Menu</button>
+                        </div>
+                    `}
+                </div>
+            `;
+        };
+        
+        const CategoryModal = ({ isOpen, activeCategory }) => {
+            if (!isOpen) return '';
+            const categories = ['All', ...Object.keys(categoryImages).filter(c => c !== 'All')];
+            return `
+                <div id="category-modal-overlay" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div class="bg-white rounded-2xl p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto animate-scale-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl royal-font font-bold text-gray-800">Menu Categories</h3>
+                            <button id="category-modal-close" class="p-2 rounded-full hover:bg-gray-100 text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                            ${categories.map(category => `
+                                <div class="category-select-item flex flex-col items-center cursor-pointer group" data-category="${category}">
+                                    <div class="w-20 h-20 rounded-full overflow-hidden mb-2 ${activeCategory === category ? 'ring-4 ring-[#A40046] ring-offset-2' : ''}">
+                                        <img src="${categoryImages[category]}" alt="${category}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" loading="lazy"/>
+                                    </div>
+                                    <h4 class="text-sm text-center font-medium text-gray-700 ${activeCategory === category ? 'text-[#A40046]' : ''}">${category}</h4>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const ItemDetailModal = ({ item }) => {
+            if (!item) return '';
+            return `
+                <div id="item-detail-overlay" class="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 animate-modal-fade-in">
+                    <div id="item-detail-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-modal-scale-up">
+                        <div class="relative flex-shrink-0 h-64">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
+                            <button id="modal-close-btn" class="absolute top-4 right-4 bg-white text-gray-800 rounded-full p-2 shadow-lg hover:scale-110 transition-transform z-10">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        <div class="p-6 flex-grow overflow-y-auto">
+                            <h3 class="text-2xl font-bold royal-font text-gray-900 mb-2">${item.name}</h3>
+                            <div class="flex items-center mb-4">
+                                <span class="text-2xl font-bold text-gray-900">₹${item.price}</span>
+                            </div>
+                            <p class="text-gray-600 leading-relaxed text-sm">${item.description}</p>
+                        </div>
+                        <div class="p-6 border-t border-gray-100">
+                            <button class="modal-add-to-cart-btn w-full bg-[#A40046] text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-[#830038] text-base flex justify-center items-center gap-2 transition-colors" data-item-id="${item.id}">
+                                Add to Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const AddressModal = ({ isOpen }) => {
+            if (!isOpen) return '';
+            return `
+                <div id="address-modal-overlay" class="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4 animate-modal-fade-in">
+                    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-modal-scale-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl royal-font font-bold text-gray-800">Delivery Details</h3>
+                            <button id="address-modal-close" class="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Your Name</label>
+                                <input type="text" id="customer-name" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] focus:bg-white transition-colors text-gray-800 font-medium" placeholder="e.g. Rahul Sharma">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Delivery Address</label>
+                                <textarea id="customer-address" rows="3" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] focus:bg-white transition-colors text-gray-800 font-medium resize-none" placeholder="House No, Street, Area..."></textarea>
+                            </div>
+                            <button id="confirm-whatsapp-btn" class="w-full py-4 px-6 rounded-xl text-white font-bold bg-[#25D366] hover:bg-[#128C7E] shadow-lg flex items-center justify-center gap-3 transition-transform hover:scale-[1.02]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                                <span>Send Order</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const CartSidebar = ({ isOpen, cart }) => {
+            const items = Object.values(cart);
+            const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            return `
+                <aside class="fixed top-0 right-0 w-full sm:max-w-md h-full bg-white text-gray-800 z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'} lg:sticky lg:top-24 lg:transform-none lg:h-[calc(100vh-6rem)] lg:rounded-2xl shadow-2xl flex flex-col border-l border-gray-100">
+                    <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-white">
+                        <h3 class="text-xl royal-font font-bold">Your Cart</h3>
+                        <button id="cart-close-btn" class="lg:hidden p-2 rounded-full hover:bg-gray-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="flex-grow overflow-y-auto p-4 space-y-4">
+                        ${items.length === 0 ? `
+                            <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-2 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                                <p>Your cart is empty</p>
+                            </div>
+                        ` : items.map(item => `
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <div class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-sm text-gray-800 truncate">${item.name}</p>
+                                        <p class="text-xs text-gray-500">₹${item.price}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                                    <button class="quantity-change-btn bg-white text-[#A40046] w-8 h-8 flex items-center justify-center font-bold hover:bg-pink-50 transition-colors" data-item-id="${item.id}" data-change="-1">-</button>
+                                    <span class="font-semibold w-8 text-center text-sm bg-white">${item.quantity}</span>
+                                    <button class="quantity-change-btn bg-white text-[#A40046] w-8 h-8 flex items-center justify-center font-bold hover:bg-pink-50 transition-colors" data-item-id="${item.id}" data-change="1">+</button>
+                                </div>
+                                <div class="w-16 text-right font-medium text-sm">₹${item.price * item.quantity}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="p-5 bg-gray-50 border-t border-gray-100">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-gray-600 font-medium">Item Total</span>
+                            <span class="text-xl font-bold text-gray-900">₹${total.toFixed(0)}</span>
+                        </div>
+                        <button id="send-order-btn" ${items.length === 0 ? 'disabled' : ''} class="w-full py-3.5 rounded-xl text-white font-bold bg-[#A40046] hover:bg-[#830038] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95">
+                            Send Order
+                        </button>
+                    </div>
+                </aside>
+            `;
+        };
+
+        const SearchModal = ({ isOpen }) => {
+            if (!isOpen) return '';
+            return `
+                <div id="search-modal-overlay" class="fixed inset-0 bg-white z-50 p-4 flex flex-col animate-fade-in">
+                    <div class="flex items-center gap-3 mb-4">
+                         <button id="search-modal-close" class="p-2 -ml-2 rounded-full hover:bg-gray-100 text-gray-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        </button>
+                        <div class="flex-1 relative">
+                             <input type="text" id="search-input" placeholder="Search for dishes..." class="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] text-gray-800" autoFocus />
+                             <svg class="absolute left-3 top-3.5 w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </div>
+                    </div>
+                    <div id="search-content" class="flex-grow overflow-y-auto"></div>
+                </div>
+            `;
+        };
+        
+        const FloatingCategoryButton = ({ isVisible }) => `
+            <button id="floating-category-btn" class="fixed bottom-6 left-1/2 -translate-x-[calc(50%+3.5rem)] z-40 w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center shadow-xl transform transition-all duration-300 hover:scale-110 lg:hidden ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            </button>
+        `;
+
+        const FloatingCartButton = ({ isVisible, cartCount }) => `
+            <button id="floating-cart-btn" class="fixed bottom-6 left-1/2 translate-x-[calc(50%-3.5rem)] z-40 w-12 h-12 bg-[#A40046] text-white rounded-full flex items-center justify-center shadow-xl transform transition-all duration-300 hover:scale-110 lg:hidden ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                ${cartCount > 0 ? `<span class="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold bg-white text-[#A40046] rounded-full border border-[#A40046]">${cartCount}</span>` : ''}
+            </button>
+        `;
+        
+        const AddToCartNotification = ({ itemName, key }) => {
+            if (!itemName) return '';
+            return `
+                <div key="${key}" class="fixed top-24 left-1/2 z-[100] animate-notification w-max max-w-[90vw]">
+                    <div class="flex items-center gap-3 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-2xl">
+                        <svg class="w-5 h-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span class="font-medium text-sm">Added <b>${itemName}</b></span>
+                    </div>
+                </div>
+            `;
+        };
+
+        const Footer = () => `
+            <footer class="bg-white py-8 mt-12 border-t border-gray-200">
+                <div class="container mx-auto px-4 text-center">
+                    <p class="font-bold text-[#A40046] text-xl royal-font mb-2">NAई बहु</p>
+                    <p class="text-sm text-gray-500 mb-4">Delicious food, delivered to your doorstep.</p>
+                    <p class="text-xs text-gray-400">&copy; ${new Date().getFullYear()} All Rights Reserved.</p>
+                </div>
+            </footer>
+        `;
+
+        // --- LOGIC FUNCTIONS ---
+        
+        function handleFilterMenu(category) {
+            state.activeCategory = category;
+            state.searchResults = null;
+            state.searchQueryDisplay = '';
+            renderApp();
+            window.scrollTo(0, 0);
+        }
+        
+        function handleSearch(query) {
+            const lowerCaseQuery = query.toLowerCase();
+            state.searchQueryDisplay = query;
+            state.searchResults = MENU.filter(item => 
+                item.name.toLowerCase().includes(lowerCaseQuery) ||
+                item.description.toLowerCase().includes(lowerCaseQuery) ||
+                (item.searchTerms && item.searchTerms.some(term => term.toLowerCase().includes(lowerCaseQuery)))
+            );
+            state.isSearchOpen = false;
+            renderApp();
+        }
+        
+        function clearSearch() {
+            state.searchResults = null;
+            state.searchQueryDisplay = '';
+            handleFilterMenu(state.activeCategory);
+        }
+
+        function addToCart(itemId) {
+            const item = MENU.find(i => i.id === itemId);
+            if (!item) return;
+
+            const existingItem = state.cart[itemId];
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                state.cart[itemId] = { ...item, quantity: 1 };
+            }
+            
+            state.lastAddedItem = item.name;
+            state.notificationKey += 1;
+            
+            renderApp();
+
+            setTimeout(() => {
+                if (state.notificationKey === state.notificationKey) { 
+                    state.lastAddedItem = null;
+                    renderApp(); 
+                }
+            }, 3000);
+        }
+        
+        function changeQuantity(itemId, change) {
+            const item = state.cart[itemId];
+            if (!item) return;
+            item.quantity += change;
+            if (item.quantity <= 0) {
+                delete state.cart[itemId];
+            }
+            renderApp();
+        }
+        
+        function openAddressModal() {
+             const items = Object.values(state.cart);
+            if (items.length === 0) {
+                alert("Your cart is empty!");
+                return;
+            }
+            state.isAddressModalOpen = true;
+            renderApp();
+        }
+
+        function handleWhatsAppRedirect() {
+            const name = document.getElementById('customer-name').value.trim();
+            const address = document.getElementById('customer-address').value.trim();
+
+            if (!name || !address) {
+                alert("Please fill in both Name and Address.");
+                return;
+            }
+
+            const items = Object.values(state.cart);
+            const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            let message = `*New Home Delivery Order*\n`;
+            message += `------------------------------\n`;
+            message += `*Name:* ${name}\n`;
+            message += `*Address:* ${address}\n`;
+            message += `------------------------------\n`;
+            message += `*Order Details:*\n`;
+            
+            items.forEach(item => {
+                message += `- ${item.name} x ${item.quantity} (₹${item.price * item.quantity})\n`;
+            });
+            
+            message += `------------------------------\n`;
+            message += `*Total Bill: ₹${total}*`;
+            message += `\n\n_Please confirm my order._`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodedMessage}`;
+
+            // Clear cart and close modal
+            state.cart = {};
+            state.isAddressModalOpen = false;
+            state.message = { text: 'Redirecting to WhatsApp...', type: 'success' };
+            
+            renderApp();
+            
+            // Redirect
+            window.open(whatsappUrl, '_blank');
+        }
+
+
+        // --- MAIN RENDER LOGIC ---
+
+        function renderApp() {
+            const cartCount = Object.values(state.cart).reduce((sum, item) => sum + item.quantity, 0);
+            
+            let filteredMenu = MENU;
+            if (state.activeCategory !== 'All') {
+                filteredMenu = MENU.filter(item => item.category === state.activeCategory);
+            }
+
+            root.innerHTML = `
+                <div class="relative z-10 min-h-screen flex flex-col">
+                    <div class="flex-grow">
+                        ${AddToCartNotification({ itemName: state.lastAddedItem, key: state.notificationKey })}
+                        ${Header({ cartCount })}
+                        <main class="container mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            ${MenuSection({ activeCategory: state.activeCategory, searchResults: state.searchResults, searchQueryDisplay: state.searchQueryDisplay, filteredMenu })}
+                            ${CartSidebar({ isOpen: state.isCartOpen, cart: state.cart })}
+                        </main>
+                    </div>
+                    ${Footer()}
+                    ${SearchModal({ isOpen: state.isSearchOpen })}
+                    ${CategoryModal({ isOpen: state.isCategoryModalOpen, activeCategory: state.activeCategory })}
+                    ${AddressModal({ isOpen: state.isAddressModalOpen })}
+                    ${FloatingCategoryButton({ isVisible: state.isFloatingCategoryButtonVisible })}
+                    ${FloatingCartButton({ isVisible: state.isFloatingCartButtonVisible, cartCount })}
+                    ${ItemDetailModal({ item: state.selectedItem })}
+                </div>
+            `;
+            
+            attachEventListeners();
+        }
+        
+        function attachEventListeners() {
+            // Header
+            document.getElementById('search-btn')?.addEventListener('click', () => {
+                state.isSearchOpen = true;
+                renderApp();
+                setTimeout(() => document.getElementById('search-input')?.focus(), 100);
+            });
+            document.getElementById('cart-btn')?.addEventListener('click', () => {
+                state.isCartOpen = !state.isCartOpen;
+                renderApp();
+            });
+            
+            // Menu Section
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    addToCart(parseInt(btn.dataset.itemId));
+                });
+            });
+            document.querySelectorAll('.menu-item-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const itemId = parseInt(card.dataset.itemId);
+                    state.selectedItem = MENU.find(i => i.id === itemId);
+                    renderApp();
+                });
+            });
+
+            document.getElementById('clear-search-btn')?.addEventListener('click', clearSearch);
+            document.getElementById('reset-search-btn')?.addEventListener('click', clearSearch);
+            
+            // Slider Interactions
+            document.querySelectorAll('.category-slider-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    handleFilterMenu(item.dataset.category);
+                });
+            });
+
+            // Cart Sidebar
+            document.getElementById('cart-close-btn')?.addEventListener('click', () => {
+                state.isCartOpen = false;
+                renderApp();
+            });
+            document.querySelectorAll('.quantity-change-btn').forEach(btn => {
+                btn.addEventListener('click', () => changeQuantity(parseInt(btn.dataset.itemId), parseInt(btn.dataset.change)));
+            });
+            document.getElementById('send-order-btn')?.addEventListener('click', openAddressModal);
+            
+            // Search Modal
+            const searchModalOverlay = document.getElementById('search-modal-overlay');
+            if (searchModalOverlay) {
+                document.getElementById('search-modal-close').addEventListener('click', () => {
+                    state.isSearchOpen = false;
+                    renderApp();
+                });
+                
+                const searchInput = document.getElementById('search-input');
+                searchInput.addEventListener('input', (e) => handleSearchInput(e.target.value));
+                handleSearchInput(searchInput.value); // Init
+            }
+
+            // Category Modal
+            const categoryModalOverlay = document.getElementById('category-modal-overlay');
+            if(categoryModalOverlay) {
+                categoryModalOverlay.addEventListener('click', () => {
+                    state.isCategoryModalOpen = false;
+                    renderApp();
+                });
+                categoryModalOverlay.querySelector('div').addEventListener('click', e => e.stopPropagation());
+                document.getElementById('category-modal-close').addEventListener('click', () => {
+                    state.isCategoryModalOpen = false;
+                    renderApp();
+                });
+                document.querySelectorAll('.category-select-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        handleFilterMenu(item.dataset.category);
+                        state.isCategoryModalOpen = false;
+                    });
+                });
+            }
+
+            // Item Detail Modal
+            const itemDetailOverlay = document.getElementById('item-detail-overlay');
+            if(itemDetailOverlay) {
+                const closeModal = () => {
+                    state.selectedItem = null;
+                    renderApp();
+                };
+                itemDetailOverlay.addEventListener('click', closeModal);
+                document.getElementById('item-detail-content').addEventListener('click', e => e.stopPropagation());
+                document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+                document.querySelector('.modal-add-to-cart-btn')?.addEventListener('click', (e) => {
+                    addToCart(parseInt(e.currentTarget.dataset.itemId));
+                    closeModal();
+                });
+            }
+
+            // Address Modal
+            const addressModalOverlay = document.getElementById('address-modal-overlay');
+            if (addressModalOverlay) {
+                const closeAddressModal = () => {
+                    state.isAddressModalOpen = false;
+                    renderApp();
+                };
+                addressModalOverlay.addEventListener('click', closeAddressModal);
+                addressModalOverlay.querySelector('div').addEventListener('click', e => e.stopPropagation());
+                document.getElementById('address-modal-close').addEventListener('click', closeAddressModal);
+                document.getElementById('confirm-whatsapp-btn').addEventListener('click', handleWhatsAppRedirect);
+            }
+
+            // Floating Buttons
+            document.getElementById('floating-category-btn')?.addEventListener('click', () => {
+                 state.isCategoryModalOpen = true;
+                 renderApp();
+            });
+            document.getElementById('floating-cart-btn')?.addEventListener('click', () => {
+                 state.isCartOpen = true;
+                 renderApp();
+            });
+        }
+        
+        function handleSearchInput(query) {
+            query = query.toLowerCase();
+            const contentEl = document.getElementById('search-content');
+            if (!contentEl) return;
+            
+            if (query.length === 0) {
+                contentEl.innerHTML = `
+                    <div class="mt-4">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Popular Cuisines</h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${popularSearches.map(term => `<span class="popular-search-tag inline-block bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full text-sm cursor-pointer hover:border-[#A40046] hover:text-[#A40046] transition-colors" data-term="${term}">${term}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+                document.querySelectorAll('.popular-search-tag').forEach(tag => {
+                    tag.addEventListener('click', () => {
+                        handleSearch(tag.dataset.term);
+                    });
+                });
+                return;
+            }
+
+            if (query.length >= 1) {
+                 const results = MENU.filter(item => 
+                    item.name.toLowerCase().includes(query) ||
+                    item.description.toLowerCase().includes(query) ||
+                    (item.searchTerms && item.searchTerms.some(t => t.toLowerCase().includes(query)))
+                );
+                
+                if (results.length > 0) {
+                    contentEl.innerHTML = `
+                        <div class="mt-4 space-y-4 pb-4">
+                            ${results.map(item => `
+                                <div class="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer search-result-item" data-item-id="${item.id}">
+                                    <img src="${item.image}" class="w-16 h-16 rounded-lg object-cover bg-gray-200" loading="lazy">
+                                    <div class="flex-1">
+                                        <div class="font-bold text-gray-800">${item.name}</div>
+                                        <div class="text-xs text-gray-500 line-clamp-1">${item.description}</div>
+                                        <div class="text-sm font-bold text-gray-900 mt-1">₹${item.price}</div>
+                                    </div>
+                                    <button class="modal-add-btn bg-white text-[#A40046] border border-[#A40046] px-3 py-1 rounded-lg text-xs font-bold uppercase hover:bg-[#A40046] hover:text-white transition-colors" data-item-id="${item.id}">Add</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    document.querySelectorAll('.modal-add-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            addToCart(parseInt(btn.dataset.itemId));
+                            state.isSearchOpen = false;
+                        });
+                    });
+                    document.querySelectorAll('.search-result-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                             addToCart(parseInt(item.dataset.itemId));
+                             state.isSearchOpen = false;
+                        });
+                    });
+
+                } else {
+                    contentEl.innerHTML = `
+                        <div class="flex flex-col items-center justify-center mt-10">
+                             <p class="text-gray-500">No food found for "${query}"</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // --- INITIALIZATION ---
+        
+        function main() {
+            // Initial Splash Screen
+            root.innerHTML = SplashScreen();
+            setTimeout(() => {
+                state.showSplash = false;
+                renderApp();
+            }, 2000);
+            
+            // Scroll listener for floating buttons
+            window.addEventListener('scroll', () => {
+                const shouldBeVisible = window.scrollY > 100;
+                if (state.isFloatingCategoryButtonVisible !== shouldBeVisible || state.isFloatingCartButtonVisible !== shouldBeVisible) {
+                    state.isFloatingCategoryButtonVisible = shouldBeVisible;
+                    state.isFloatingCartButtonVisible = shouldBeVisible;
+                    renderApp();
+                }
+            });
+        }
+        
+        main();
+
+    </script>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
