@@ -481,7 +481,7 @@
         const SuggestionsSlider = () => {
             const suggestionItems = MENU.filter(item => item.category === 'Drinks & Add On' || item.category === 'Papad').sort(() => 0.5 - Math.random()).slice(0, 6);
             return `
-                <div class="col-span-1 md:col-span-2 mt-8 mb-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <div class="col-span-1 md:col-span-2 my-8 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                     <h3 class="text-lg font-bold royal-font mb-4 text-gray-800">Complete your meal</h3>
                     <div class="category-slider-container flex items-center gap-4 overflow-x-auto pb-2">
                         ${suggestionItems.map(item => `
@@ -511,24 +511,25 @@
             }
 
             const menuItemsHtml = itemsToDisplay.reduce((acc, item, index) => {
-                // Insert slider at the top for All category or standard view, but not in favorites view
+                // Insert category slider at top for All/Home view
                 if (index === 0 && searchResults === null && view === 'home') {
                    acc.push(CategorySlider({ activeCategory }));
                 }
+                
                 acc.push(MenuItemCard({ item, isFavorite: favorites.includes(item.id) }));
+                
+                // Insert suggestions slider after the 8th item
+                if (index === 7 && searchResults === null && view === 'home') {
+                     acc.push(SuggestionsSlider());
+                }
+
                 return acc;
             }, []).join('');
             
-            // Slider fallback
+            // Slider fallback if empty items
             let sliderHtml = '';
              if (itemsToDisplay.length === 0 && searchResults === null && view === 'home') {
                  sliderHtml = CategorySlider({ activeCategory });
-            }
-
-            // Suggestions slider if cart has items
-            let suggestionsHtml = '';
-            if (cartCount > 0) {
-                suggestionsHtml = SuggestionsSlider();
             }
 
             return `
@@ -546,7 +547,6 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             ${menuItemsHtml}
                         </div>
-                        ${suggestionsHtml}
                     ` : `
                         ${sliderHtml}
                         <div class="text-center py-20 px-4">
@@ -726,7 +726,23 @@
                         `).join('')}
                     </div>
                     
-                    <div class="p-5 bg-gray-50 border-t border-gray-100">
+                    <!-- Location & Time Info in Cart Background -->
+                    <div class="px-5 py-4 bg-gray-50 border-t border-gray-100 text-xs text-gray-600 space-y-2">
+                         <a href="https://maps.google.com/?q=Nai+Bahu+Restaurant" target="_blank" class="flex items-center gap-2 hover:text-[#A40046] transition-colors group">
+                            <div class="w-6 h-6 bg-white rounded-full shadow-sm flex items-center justify-center text-[#A40046]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            </div>
+                            <span class="font-medium underline decoration-dotted group-hover:decoration-solid">Visit Us (View Map)</span>
+                         </a>
+                         <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 bg-white rounded-full shadow-sm flex items-center justify-center text-[#A40046]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
+                            <span class="font-medium">5:00 p.m to 2:30 a.m</span>
+                         </div>
+                    </div>
+
+                    <div class="p-5 bg-gray-50 border-t border-gray-200">
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-gray-600 font-medium">Item Total</span>
                             <span class="text-xl font-bold text-gray-900">₹${total.toFixed(0)}</span>
@@ -757,7 +773,9 @@
             `;
         };
 
-        const BottomNav = ({ activeView }) => `
+        const BottomNav = ({ activeView, isCartOpen }) => {
+            if (isCartOpen) return '';
+            return `
             <div class="fixed bottom-0 left-0 w-full bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-[50] flex justify-around items-center py-3 lg:hidden border-t border-gray-100">
                 <button class="flex flex-col items-center gap-1 w-full ${activeView === 'home' ? 'text-[#A40046]' : 'text-gray-400'}" onclick="setView('home')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -769,6 +787,7 @@
                 </button>
             </div>
         `;
+        }
         
         const AddToCartNotification = ({ itemName, key }) => {
             if (!itemName) return '';
@@ -971,7 +990,7 @@
                     ${NoteModal({ isOpen: state.isNoteModalOpen, itemId: state.pendingItemId })}
                     ${AddressModal({ isOpen: state.isAddressModalOpen })}
                     ${ItemDetailModal({ item: state.selectedItem, isFavorite: state.selectedItem && state.favorites.includes(state.selectedItem.id) })}
-                    ${BottomNav({ activeView: state.view })}
+                    ${BottomNav({ activeView: state.view, isCartOpen: state.isCartOpen })}
                 </div>
             `;
             
