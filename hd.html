@@ -143,6 +143,14 @@
             fill: none;
             color: #6b7280;
         }
+        
+        /* Scratch Card Canvas */
+        #scratch-canvas {
+            touch-action: none; /* Prevent scrolling while scratching */
+        }
+        .scratch-text-glow {
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+        }
     </style>
     <link rel="stylesheet" href="/index.css">
 </head>
@@ -154,6 +162,8 @@
     <script type="module">
         // --- CONSTANTS ---
         const WHATSAPP_NUMBER = '9173213576';
+        // PASTE YOUR GOOGLE SCRIPT WEB APP URL BELOW
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytwuPET38wSHDMmXGtTftKbQIvj6LGi9xBLa4wDHor0fM7pr4KOqfSY3Ll5fh8fhj1Xw/exec'; 
         
         const MENU = [
             // SOUP
@@ -401,7 +411,10 @@
             favorites: JSON.parse(localStorage.getItem('favoritesNaiBahu')) || [],
             isNoteModalOpen: false,
             pendingItemId: null,
-            view: 'home' // 'home' or 'favorites'
+            view: 'home', // 'home' or 'favorites'
+            // Scratch & Win Logic
+            showScratchCard: !localStorage.getItem('hasScratchedNaiBahu'),
+            discountApplied: localStorage.getItem('discountNaiBahu') ? JSON.parse(localStorage.getItem('discountNaiBahu')) : null,
         };
 
         const root = document.getElementById('root');
@@ -415,6 +428,36 @@
                 </div>
             </div>
         `;
+        
+        // Scratch Card Modal Component
+        const ScratchCardModal = () => {
+            if (!state.showScratchCard) return '';
+            return `
+                <div id="scratch-modal-overlay" class="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4 animate-fade-in">
+                    <div class="relative bg-white rounded-xl p-1 shadow-2xl max-w-xs w-full transform scale-100 overflow-hidden">
+                        <div class="bg-gradient-to-br from-[#A40046] to-pink-600 p-6 rounded-lg text-center text-white">
+                            <h2 class="text-2xl font-bold royal-font mb-2">Scratch & Win!</h2>
+                            <p class="text-sm opacity-90 mb-4">Scratch the card below to reveal your exclusive discount.</p>
+                            
+                            <div class="relative w-64 h-32 mx-auto bg-white rounded-lg overflow-hidden select-none">
+                                <!-- Hidden Prize -->
+                                <div class="absolute inset-0 flex flex-col items-center justify-center bg-yellow-100 text-[#A40046]">
+                                    <span class="text-sm font-bold uppercase tracking-wider">You Won</span>
+                                    <span class="text-3xl font-black scratch-text-glow">₹50 OFF</span>
+                                    <span class="text-[10px] font-bold mt-1">On your first order</span>
+                                </div>
+                                <!-- Canvas Cover -->
+                                <canvas id="scratch-canvas" width="256" height="128" class="absolute inset-0 cursor-pointer touch-none"></canvas>
+                            </div>
+                            
+                            <button id="close-scratch-btn" class="mt-6 text-xs underline opacity-70 hover:opacity-100">No thanks, I hate discounts</button>
+                        </div>
+                    </div>
+                    <!-- Confetti Container -->
+                    <div id="confetti-container" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+                </div>
+            `;
+        };
 
         const Header = ({ cartCount }) => `
             <header class="fixed top-0 left-0 right-0 z-50 shadow-md text-white w-full bg-[#A40046] transition-all duration-300">
@@ -656,6 +699,11 @@
                                 <input type="text" id="customer-name" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] text-gray-800 font-medium" placeholder="e.g. Rahul Sharma">
                             </div>
                             
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Phone Number</label>
+                                <input type="tel" id="phone-number" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A40046] text-gray-800 font-medium" placeholder="e.g. 9876543210">
+                            </div>
+                            
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Flat / House No.</label>
@@ -678,8 +726,8 @@
                             </div>
 
                             <button id="confirm-whatsapp-btn" class="w-full py-4 px-6 rounded-xl text-white font-bold bg-[#25D366] hover:bg-[#128C7E] shadow-lg flex items-center justify-center gap-3 transition-transform hover:scale-[1.02] mt-4">
+                                <span id="btn-text">Send Order</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                                <span>Send Order</span>
                             </button>
                         </div>
                     </div>
@@ -687,9 +735,11 @@
             `;
         };
 
-        const CartSidebar = ({ isOpen, cart }) => {
+        const CartSidebar = ({ isOpen, cart, discount }) => {
             const items = Object.values(cart);
-            const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const discountAmount = (discount && items.length > 0) ? discount.amount : 0;
+            const total = Math.max(0, subtotal - discountAmount);
             
             return `
                 <aside class="fixed top-0 right-0 w-full sm:max-w-md h-full bg-white text-gray-800 z-[60] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'} lg:sticky lg:top-24 lg:transform-none lg:h-[calc(100vh-6rem)] lg:rounded-2xl shadow-2xl flex flex-col border-l border-gray-100">
@@ -743,9 +793,21 @@
                     </div>
 
                     <div class="p-5 bg-gray-50 border-t border-gray-200">
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="text-gray-600 font-medium">Item Total</span>
-                            <span class="text-xl font-bold text-gray-900">₹${total.toFixed(0)}</span>
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between items-center text-sm text-gray-600">
+                                <span>Item Total</span>
+                                <span>₹${subtotal.toFixed(0)}</span>
+                            </div>
+                            ${discountAmount > 0 ? `
+                                <div class="flex justify-between items-center text-sm font-bold text-green-600">
+                                    <span>Scratch Card Discount</span>
+                                    <span>-₹${discountAmount}</span>
+                                </div>
+                            ` : ''}
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-800 font-bold">To Pay</span>
+                                <span class="text-xl font-bold text-[#A40046]">₹${total.toFixed(0)}</span>
+                            </div>
                         </div>
                         <button id="send-order-btn" ${items.length === 0 ? 'disabled' : ''} class="w-full py-3.5 rounded-xl text-white font-bold bg-[#A40046] hover:bg-[#830038] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95">
                             Send Order
@@ -915,24 +977,68 @@
             renderApp();
         }
 
-        function handleWhatsAppRedirect() {
+        async function handleWhatsAppRedirect() {
             const name = document.getElementById('customer-name').value.trim();
+            const phone = document.getElementById('phone-number').value.trim();
             const flatNo = document.getElementById('flat-no').value.trim();
             const society = document.getElementById('society').value.trim();
             const area = document.getElementById('area').value.trim();
             const pincode = document.getElementById('pincode').value.trim();
 
-            if (!name || !flatNo || !society || !area || !pincode) {
-                alert("Please fill in all address details.");
+            if (!name || !phone || !flatNo || !society || !area || !pincode) {
+                alert("Please fill in all address details and phone number.");
                 return;
+            }
+            
+            // Update UI to show processing
+            const btn = document.getElementById('confirm-whatsapp-btn');
+            const btnText = document.getElementById('btn-text');
+            if(btn && btnText) {
+                btn.disabled = true;
+                btnText.innerText = "Processing...";
             }
 
             const items = Object.values(state.cart);
-            const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const discountAmount = (state.discountApplied && items.length > 0) ? state.discountApplied.amount : 0;
+            const total = Math.max(0, subtotal - discountAmount);
+            
+            // 1. Prepare Data for Google Sheet
+            const orderId = `NB-${Date.now()}`;
+            const orderItemsString = items.map(i => `${i.name} x ${i.quantity} ${i.note ? '('+i.note+')' : ''}`).join(', ');
 
+            const sheetData = {
+                orderId: orderId,
+                name: name,
+                phone: phone,
+                flatNo: flatNo,
+                society: society,
+                area: area,
+                pincode: pincode,
+                items: orderItemsString,
+                total: total
+            };
+
+            // 2. Send to Google Sheet (using no-cors)
+            if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.includes('script.google.com')) {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(sheetData)
+                    });
+                } catch (e) {
+                    console.error("Error sending to sheet, proceeding to WhatsApp", e);
+                }
+            }
+
+            // 3. Construct WhatsApp Message
             let message = `*New Home Delivery Order*\n`;
             message += `------------------------------\n`;
+            message += `*Order ID:* ${orderId}\n`;
             message += `*Name:* ${name}\n`;
+            message += `*Phone:* ${phone}\n`;
             message += `*Address:*\n`;
             message += `${flatNo}, ${society},\n`;
             message += `${area} - ${pincode}\n`;
@@ -945,6 +1051,12 @@
                 message += `\n`;
             });
             
+            if (discountAmount > 0) {
+                message += `------------------------------\n`;
+                message += `Subtotal: ₹${subtotal}\n`;
+                message += `*Discount: -₹${discountAmount}*\n`;
+            }
+
             message += `------------------------------\n`;
             message += `*Total Bill: ₹${total}*`;
             message += `\n\n_Please confirm my order._`;
@@ -955,7 +1067,6 @@
             // Clear cart and close modal
             state.cart = {};
             state.isAddressModalOpen = false;
-            state.message = { text: 'Redirecting to WhatsApp...', type: 'success' };
             
             renderApp();
             
@@ -981,7 +1092,7 @@
                         ${Header({ cartCount })}
                         <main class="container mx-auto px-4 pt-20 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
                             ${MenuSection({ activeCategory: state.activeCategory, searchResults: state.searchResults, searchQueryDisplay: state.searchQueryDisplay, filteredMenu, view: state.view, favorites: state.favorites, cartCount })}
-                            ${CartSidebar({ isOpen: state.isCartOpen, cart: state.cart })}
+                            ${CartSidebar({ isOpen: state.isCartOpen, cart: state.cart, discount: state.discountApplied })}
                         </main>
                     </div>
                     ${Footer()}
@@ -991,10 +1102,137 @@
                     ${AddressModal({ isOpen: state.isAddressModalOpen })}
                     ${ItemDetailModal({ item: state.selectedItem, isFavorite: state.selectedItem && state.favorites.includes(state.selectedItem.id) })}
                     ${BottomNav({ activeView: state.view, isCartOpen: state.isCartOpen })}
+                    ${ScratchCardModal()}
                 </div>
             `;
             
             attachEventListeners();
+            if (state.showScratchCard) {
+                initScratchCard();
+            }
+        }
+        
+        function initScratchCard() {
+            const canvas = document.getElementById('scratch-canvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            let isDrawing = false;
+
+            // Fill with overlay
+            ctx.fillStyle = '#f3f4f6'; // Match card bg
+            ctx.fillRect(0, 0, width, height);
+            
+            // Add texture/text to scratch layer
+            ctx.fillStyle = '#A40046';
+            ctx.font = 'bold 20px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('SCRATCH HERE', width/2, height/2);
+
+            // Scratch logic
+            const getBrushPos = (xRef, yRef) => {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: Math.floor((xRef - rect.left) / (rect.right - rect.left) * canvas.width),
+                    y: Math.floor((yRef - rect.top) / (rect.bottom - rect.top) * canvas.height)
+                };
+            };
+
+            const scratch = (x, y) => {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x, y, 20, 0, 2 * Math.PI); // Brush size
+                ctx.fill();
+                
+                checkScratchPercent();
+            };
+
+            const handleStart = (e) => { isDrawing = true; };
+            const handleEnd = (e) => { isDrawing = false; };
+            const handleMove = (e) => {
+                if (!isDrawing) return;
+                e.preventDefault(); // Stop scrolling on mobile
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const pos = getBrushPos(clientX, clientY);
+                scratch(pos.x, pos.y);
+            };
+
+            canvas.addEventListener('mousedown', handleStart);
+            canvas.addEventListener('touchstart', handleStart);
+            window.addEventListener('mouseup', handleEnd);
+            window.addEventListener('touchend', handleEnd);
+            canvas.addEventListener('mousemove', handleMove);
+            canvas.addEventListener('touchmove', handleMove);
+
+            const checkScratchPercent = () => {
+                const imageData = ctx.getImageData(0, 0, width, height);
+                const pixels = imageData.data;
+                let transparentPixels = 0;
+                
+                for (let i = 0; i < pixels.length; i += 4) {
+                    if (pixels[i+3] < 128) transparentPixels++;
+                }
+                
+                const percent = (transparentPixels / (pixels.length / 4)) * 100;
+                
+                if (percent > 40) {
+                    // Auto reveal
+                    canvas.style.transition = 'opacity 0.5s';
+                    canvas.style.opacity = '0';
+                    triggerWin();
+                }
+            };
+
+            const triggerWin = () => {
+                // Prevent multiple triggers
+                if (!state.showScratchCard) return;
+                
+                // Remove canvas events
+                canvas.removeEventListener('mousemove', handleMove);
+                canvas.removeEventListener('touchmove', handleMove);
+
+                // Logic
+                setTimeout(() => {
+                    // Simple confetti effect
+                    const colors = ['#A40046', '#FFD700', '#25D366', '#3b82f6'];
+                    const confettiContainer = document.getElementById('confetti-container');
+                    if(confettiContainer) {
+                        for(let i=0; i<50; i++) {
+                            const confetti = document.createElement('div');
+                            confetti.style.position = 'absolute';
+                            confetti.style.width = '8px';
+                            confetti.style.height = '8px';
+                            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                            confetti.style.left = Math.random() * 100 + '%';
+                            confetti.style.top = '-10px';
+                            confetti.style.animation = `slide-down-fade-out ${1 + Math.random() * 2}s linear forwards`;
+                            confettiContainer.appendChild(confetti);
+                        }
+                    }
+                    
+                    // Update state
+                    state.discountApplied = { code: 'NB50', amount: 50 };
+                    localStorage.setItem('hasScratchedNaiBahu', 'true');
+                    localStorage.setItem('discountNaiBahu', JSON.stringify(state.discountApplied));
+                    
+                    setTimeout(() => {
+                        state.showScratchCard = false;
+                        renderApp(); // Renders cart with discount
+                    }, 2500);
+
+                }, 300);
+            };
+            
+            // Close button
+             document.getElementById('close-scratch-btn').addEventListener('click', () => {
+                state.showScratchCard = false;
+                localStorage.setItem('hasScratchedNaiBahu', 'true'); // Don't show again
+                renderApp();
+            });
         }
         
         function attachEventListeners() {
