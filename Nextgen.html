@@ -1146,7 +1146,13 @@
         }
 
         function printInvoice() {
-            window.print();
+            if (typeof AndroidPrintInterface !== 'undefined' && AndroidPrintInterface.print) {
+    // This is the Android Path
+    AndroidPrintInterface.print(contentToPrint); 
+} else {
+    // This is the Windows/Desktop/Standard Browser Path
+    window.print();
+}
             if (currentInvoiceOrders && currentInvoiceOrders.length > 0) markInvoicesGenerated();
         }
 
