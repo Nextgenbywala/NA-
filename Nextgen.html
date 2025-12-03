@@ -1146,14 +1146,7 @@
         }
 
         function printInvoice() {
-           if (/Android/i.test(navigator.userAgent)) {
-    window.location.href = "print://document";
-} else {
-    window.print();
-}
-
-
-
+            window.print();
             if (currentInvoiceOrders && currentInvoiceOrders.length > 0) markInvoicesGenerated();
         }
 
