@@ -1146,13 +1146,7 @@
         }
 
         function printInvoice() {
-            if (typeof AndroidPrintInterface !== 'undefined' && AndroidPrintInterface.print) {
-    // This is the Android Path
-    if (typeof AndroidPrintInterface !== 'undefined' && AndroidPrintInterface.print) {
-    AndroidPrintInterface.print(document.getElementById('printable-area').outerHTML);
-} else {
-    window.print(); // Fallback for desktop
-}
+            window.print();
             if (currentInvoiceOrders && currentInvoiceOrders.length > 0) markInvoicesGenerated();
         }
 
