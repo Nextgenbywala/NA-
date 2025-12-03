@@ -1146,7 +1146,12 @@
         }
 
         function printInvoice() {
-            window.print();
+            if (window.Android) {
+    Android.printPage();   // works inside your Android app
+} else {
+    window.print();        // works on browser
+}
+
             if (currentInvoiceOrders && currentInvoiceOrders.length > 0) markInvoicesGenerated();
         }
 
