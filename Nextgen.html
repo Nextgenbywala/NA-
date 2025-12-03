@@ -1148,10 +1148,10 @@
         function printInvoice() {
             if (typeof AndroidPrintInterface !== 'undefined' && AndroidPrintInterface.print) {
     // This is the Android Path
-    AndroidPrintInterface.print(contentToPrint); 
+    if (typeof AndroidPrintInterface !== 'undefined' && AndroidPrintInterface.print) {
+    AndroidPrintInterface.print(document.getElementById('printable-area').outerHTML);
 } else {
-    // This is the Windows/Desktop/Standard Browser Path
-    window.print();
+    window.print(); // Fallback for desktop
 }
             if (currentInvoiceOrders && currentInvoiceOrders.length > 0) markInvoicesGenerated();
         }
