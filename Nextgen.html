@@ -1146,11 +1146,12 @@
         }
 
         function printInvoice() {
-            if (window.Android) {
-    Android.printPage();   // works inside your Android app
+            if (navigator.userAgent.includes("Android")) {
+    window.location.href = "print://document";
 } else {
-    window.print();        // works on browser
+    window.print();
 }
+
 
             if (currentInvoiceOrders && currentInvoiceOrders.length > 0) markInvoicesGenerated();
         }
