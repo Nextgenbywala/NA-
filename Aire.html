@@ -1,0 +1,600 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nai Bahu Restaurant & Banquets</title>
+
+    <!-- PWA Manifest & Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#A40046">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="Logo2.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts - Playfair Display and Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #A40046;
+            --primary-dark: #830038;
+            --royal-gold: #C0A062;
+            --crema: #F5EFE6;
+            --whatsapp-bg: #e5ddd5;
+            --aira-bubble: #ffffff;
+            --user-bubble: #dcf8c6;
+            --wa-green: #075e54;
+            --wa-light-green: #25d366;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary);
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            color: white;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .royal-font { font-family: 'Playfair Display', serif; }
+
+        /* Animations */
+        @keyframes message-in {
+            0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .stagger-item {
+            opacity: 0;
+            animation: message-in 0.4s ease-out forwards;
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+            50% { transform: scale(1.05); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+        }
+
+        .aira-pulse {
+            animation: pulse-soft 3s infinite ease-in-out;
+        }
+
+        .btn-haptic:active { transform: scale(0.94); }
+
+        /* WhatsApp Style Chat */
+        .chat-container {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 90%;
+            background: var(--whatsapp-bg);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            border-radius: 2rem 2rem 0 0;
+            box-shadow: 0 -15px 50px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+
+        .chat-container.active { transform: translateY(0); }
+
+        .chat-header {
+            background: var(--wa-green);
+            color: white;
+            padding: 1rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .aira-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-repeat: repeat;
+            background-size: 400px;
+            background-attachment: local;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 0.7rem 0.9rem;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            position: relative;
+            line-height: 1.4;
+            color: #111;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            animation: message-in 0.3s ease-out;
+        }
+
+        .message-aira {
+            align-self: flex-start;
+            background: var(--aira-bubble);
+            border-top-left-radius: 2px;
+        }
+
+        .message-user {
+            align-self: flex-end;
+            background: var(--user-bubble);
+            border-top-right-radius: 2px;
+        }
+
+        .recommendation-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            width: 240px;
+            margin-top: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
+        }
+
+        .chat-input-area {
+            background: #f0f0f0;
+            padding: 1rem 0.8rem 2rem 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            justify-content: center;
+        }
+
+        .option-btn {
+            background: white;
+            color: var(--wa-green);
+            padding: 0.6rem 1.4rem;
+            border-radius: 2rem;
+            border: 1px solid #e0e0e0;
+            font-size: 0.88rem;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            border-color: var(--wa-green);
+            background: #f9f9f9;
+        }
+
+        .hide-scroll::-webkit-scrollbar { display: none; }
+
+        @keyframes flying {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0.1); opacity: 0; }
+        }
+
+        .flying-item {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            animation: flying 0.6s ease-in forwards;
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            gap: 3px;
+        }
+        .dot {
+            width: 4px;
+            height: 4px;
+            background: #999;
+            border-radius: 50%;
+            animation: dot-pulse 1s infinite alternate;
+        }
+        .dot:nth-child(2) { animation-delay: 0.3s; }
+        .dot:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes dot-pulse {
+            from { opacity: 0.3; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1.1); }
+        }
+
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3"
+  }
+}
+</script>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="module">
+        const TABLE_NUMBERS = [1, 2, 5, 10, 18, 24];
+
+        const MENU = [
+            { id: 1, name: 'Manchow Soup', price: 100, description: 'Spicy Indo-Chinese classic with crispy noodles.', image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&q=80&w=400', category: 'Soup', mood: ['Sad', 'Energetic'], spice: 'Fiery' },
+            { id: 5, name: 'Paneer Tikka', price: 250, description: 'Grilled chunks of paneer marinated in royal spices.', image: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&q=80&w=400', category: 'BBQ', mood: ['Happy', 'Relaxed'], spice: 'Classic' },
+            { id: 11, name: 'Masala Chaap', price: 240, description: 'Soya chaap marinated in spicy tandoori masala.', image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&q=80&w=400', category: 'Chaap', mood: ['Energetic'], spice: 'Classic' },
+            { id: 20, name: 'Fry Momos', price: 150, description: 'Crispy veg dumplings served with spicy garlic dip.', image: 'https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?auto=format&fit=crop&q=80&w=400', category: 'Momos', mood: ['Happy'], spice: 'Fiery' },
+            { id: 24, name: 'Red Sauce Pasta', price: 250, description: 'Penne tossed in tangy Italian tomato basil sauce.', image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&q=80&w=400', category: 'Pasta', mood: ['Happy', 'Relaxed'], spice: 'Mild' },
+            { id: 27, name: 'Pav Bhaji', price: 100, description: 'Buttery mashed veg medley with soft toasted buns.', image: 'https://images.unsplash.com/photo-1626132646529-500637532537?auto=format&fit=crop&q=80&w=400', category: 'Pav Bhaji', mood: ['Happy', 'Sad'], spice: 'Classic' },
+            { id: 32, name: 'Chhole Bhature', price: 160, description: 'Authentic Punjabi spiced chickpeas with fluffy bread.', image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=400', category: 'Chhole Special', mood: ['Happy'], spice: 'Classic' },
+            { id: 40, name: 'Paneer Chilli', price: 250, description: 'Wok-tossed paneer cubes in spicy soy-chilli glaze.', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&q=80&w=400', category: 'Chinese Special', mood: ['Energetic'], spice: 'Fiery' },
+            { id: 47, name: 'Hakka Noodles', price: 150, description: 'Stir-fried noodles with fresh garden vegetables.', image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&q=80&w=400', category: 'Noodles', mood: ['Relaxed'], spice: 'Mild' },
+            { id: 53, name: 'Fried Rice', price: 130, description: 'Classic wok-fried rice with assorted vegetables.', image: 'https://images.unsplash.com/photo-1512058560366-cd2427ba5e73?auto=format&fit=crop&q=80&w=400', category: 'Rice', mood: ['Relaxed'], spice: 'Mild' },
+            { id: 59, name: 'Masala Fries', price: 120, description: 'Crispy golden fries tossed in peri-peri masala.', image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&q=80&w=400', category: 'French Fries', mood: ['Energetic', 'Happy'], spice: 'Fiery' },
+            { id: 66, name: 'Cheese Butter Masala', price: 280, description: 'Rich creamy gravy with chunks of processed cheese.', image: 'https://images.unsplash.com/photo-1585937421612-71a00561a1c7?auto=format&fit=crop&q=80&w=400', category: 'Cheese Special', mood: ['Happy'], spice: 'Mild' },
+            { id: 73, name: 'Dal Makhani', price: 190, description: 'Slow-cooked black lentils with cream and butter.', image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&q=80&w=400', category: 'Dal Special', mood: ['Relaxed', 'Sad'], spice: 'Mild' },
+            { id: 76, name: 'Dum Matka Biryani', price: 250, description: 'Aromatic long-grain rice layered in a clay pot.', image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&q=80&w=400', category: 'Nawabo ki Biryani', mood: ['Happy', 'Relaxed'], spice: 'Classic' },
+            { id: 82, name: 'Paneer Butter Masala', price: 270, description: 'Velvety tomato gravy with soft paneer cubes.', image: 'https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?auto=format&fit=crop&q=80&w=400', category: 'Paneer Special', mood: ['Happy', 'Relaxed'], spice: 'Mild' },
+            { id: 98, name: 'Hamari Pahechan', price: 700, description: 'Our signature jumbo sizzler platter with 7 items.', image: 'https://images.unsplash.com/photo-1544124499-58912cbddaad?auto=format&fit=crop&q=80&w=400', category: 'Sizzlers', mood: ['Happy', 'Energetic'], spice: 'Classic' }
+        ];
+
+        let state = {
+            cart: {},
+            isCartOpen: false,
+            tableNumber: 18,
+            activeCategory: 'All',
+            isAiraActive: false,
+            airaChat: [
+                { sender: 'aira', text: "Namaste! I'm Aira. How's your mood today? I'll find the perfect dish for you.", type: 'options', options: ['Happy', 'Sad', 'Hungry', 'Relaxed'] }
+            ],
+            currentMood: null,
+            isThinking: false
+        };
+
+        const root = document.getElementById('root');
+        const AIRA_AVATAR = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtgNCTLmk6KtXF-sIDFxBQlKTb0eLie9WOHMtr92zXRw&s';
+
+        // --- UTILS ---
+        function triggerConfetti() {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#A40046', '#C0A062'] });
+        }
+
+        function flyToCart(startElement) {
+            const rect = startElement.getBoundingClientRect();
+            const cartBtn = document.getElementById('cart-btn');
+            const cartRect = cartBtn.getBoundingClientRect();
+            const flying = document.createElement('div');
+            flying.className = 'flying-item w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg';
+            flying.style.left = `${rect.left + rect.width / 2}px`;
+            flying.style.top = `${rect.top + rect.height / 2}px`;
+            flying.style.setProperty('--tx', `${cartRect.left - rect.left}px`);
+            flying.style.setProperty('--ty', `${cartRect.top - rect.top}px`);
+            flying.innerText = '+';
+            document.body.appendChild(flying);
+            setTimeout(() => flying.remove(), 600);
+        }
+
+        // --- COMPONENTS ---
+        const Header = () => `
+            <header class="sticky top-0 z-40 bg-[var(--primary)] shadow-md w-full border-b border-white/10">
+                <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <img src="naibahu.png" alt="Logo" class="h-8 filter invert" />
+                        <span class="font-extrabold text-lg royal-font tracking-tight">NAई बहु</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select id="table-select" class="bg-white/10 text-white text-[11px] p-2 rounded-lg focus:outline-none border border-white/20">
+                            ${TABLE_NUMBERS.map(n => `<option value="${n}" ${state.tableNumber == n ? 'selected' : ''} class="text-black">T-${n}</option>`).join('')}
+                        </select>
+                        <button id="cart-btn" class="relative p-2 bg-white/10 rounded-lg text-white border border-white/20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                            ${Object.keys(state.cart).length ? `<span class="absolute -top-1 -right-1 bg-white text-[#A40046] w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center">${Object.values(state.cart).reduce((a,b)=>a+b.quantity, 0)}</span>` : ''}
+                        </button>
+                    </div>
+                </nav>
+            </header>
+        `;
+
+        const AiraTrigger = () => `
+            <button id="aira-trigger" class="fixed bottom-6 left-6 z-50 aira-pulse w-14 h-14 rounded-full flex items-center justify-center border-2 border-white shadow-2xl btn-haptic overflow-hidden">
+                <img src="${AIRA_AVATAR}" class="w-full h-full object-cover" />
+            </button>
+        `;
+
+        const ChatInterface = () => `
+            <div id="aira-chat" class="chat-container ${state.isAiraActive ? 'active' : ''}">
+                <div class="chat-header">
+                    <img src="${AIRA_AVATAR}" class="aira-avatar" />
+                    <div class="flex-grow">
+                        <p class="font-bold text-sm">Aira Assistant</p>
+                        <p class="text-[10px] opacity-80">online</p>
+                    </div>
+                    <button id="close-chat" class="p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></button>
+                </div>
+                <div class="chat-messages hide-scroll" id="chat-scroller">
+                    ${state.airaChat.map(msg => `
+                        <div class="message ${msg.sender === 'aira' ? 'message-aira' : 'message-user'}">
+                            ${msg.text}
+                            ${msg.type === 'food_cards' ? `
+                                <div class="flex gap-3 overflow-x-auto hide-scroll pb-2 mt-2">
+                                    ${msg.items.map(item => `
+                                        <div class="recommendation-card">
+                                            <img src="${item.image}" class="h-28 w-full object-cover" />
+                                            <div class="p-3">
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <p class="font-black text-[11px] text-[#A40046]">${item.name}</p>
+                                                    <p class="font-bold text-[10px]">₹${item.price}</p>
+                                                </div>
+                                                <button class="add-btn-aira w-full py-1.5 bg-[var(--wa-green)] text-white text-[10px] rounded-lg font-bold" data-id="${item.id}">Add to Order</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                    ${state.isThinking ? `
+                        <div class="message message-aira">
+                            <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+                        </div>` : ''}
+                </div>
+                <div class="chat-input-area">
+                    ${!state.isThinking && state.airaChat[state.airaChat.length - 1].type === 'options' ? `
+                        <div class="chat-options">
+                            ${state.airaChat[state.airaChat.length - 1].options.map(opt => `
+                                <button class="option-btn btn-haptic" data-val="${opt}">${opt}</button>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="text-[10px] text-gray-500 text-center">Chat with Aira to get recommendations</div>
+                    `}
+                </div>
+            </div>
+        `;
+
+        const MenuItem = (item, idx) => `
+            <div class="stagger-item bg-white rounded-xl overflow-hidden shadow-md flex flex-col border border-gray-100" style="animation-delay: ${idx * 0.05}s">
+                <div class="h-32 overflow-hidden relative">
+                    <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
+                    <div class="absolute bottom-2 right-2 bg-black/50 backdrop-blur-md text-white text-[9px] px-2 py-0.5 rounded-full font-bold">${item.spice}</div>
+                </div>
+                <div class="p-3 flex flex-col flex-grow">
+                    <div class="flex justify-between items-start mb-1 gap-1">
+                        <h3 class="text-[#A40046] font-bold text-[12px] leading-tight line-clamp-1">${item.name}</h3>
+                        <span class="text-[11px] font-black text-gray-700 whitespace-nowrap">₹${item.price}</span>
+                    </div>
+                    <p class="text-[9px] text-gray-400 line-clamp-2 mb-3 leading-tight">${item.description}</p>
+                    <button class="add-btn mt-auto bg-[#A40046] text-white py-1.5 rounded-lg text-[10px] font-bold btn-haptic" data-id="${item.id}">Add</button>
+                </div>
+            </div>
+        `;
+
+        const CartDrawer = () => {
+            const items = Object.values(state.cart);
+            const total = items.reduce((s, i) => s + (i.price * i.quantity), 0);
+            return `
+                <div id="cart-drawer" class="fixed inset-0 z-[1001] bg-black/60 backdrop-blur-sm transition-opacity ${state.isCartOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}">
+                    <aside class="absolute bottom-0 left-0 w-full h-[75%] bg-[#F5EFE6] rounded-t-[2.5rem] p-6 flex flex-col shadow-2xl transition-transform ${state.isCartOpen ? 'translate-y-0' : 'translate-y-full'}">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-black text-[#A40046] royal-font">Your Basket</h2>
+                            <button id="close-cart-drawer" class="p-2"><svg class="w-6 h-6 text-[#A40046]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                        </div>
+                        <div class="flex-grow overflow-y-auto hide-scroll space-y-3">
+                            ${items.length === 0 ? `<p class="text-center py-20 text-gray-400 italic text-sm">Empty basket...</p>` : items.map(i => `
+                                <div class="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                                    <img src="${i.image}" class="w-12 h-12 rounded-lg object-cover" />
+                                    <div class="flex-grow">
+                                        <p class="font-bold text-[12px] text-[#A40046]">${i.name}</p>
+                                        <p class="text-[10px] font-bold">₹${i.price}</p>
+                                    </div>
+                                    <div class="flex items-center gap-3 bg-gray-50 px-2 py-1 rounded-lg">
+                                        <button class="qty-btn font-black text-[#A40046]" data-id="${i.id}" data-v="-1">－</button>
+                                        <span class="text-xs font-bold">${i.quantity}</span>
+                                        <button class="qty-btn font-black text-[#A40046]" data-id="${i.id}" data-v="1">＋</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-pink-100">
+                            <div class="flex justify-between text-lg font-black text-[#A40046] mb-5">
+                                <span>Total</span><span>₹${total}</span>
+                            </div>
+                            <button id="checkout" class="w-full bg-[#A40046] text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl btn-haptic ${items.length === 0 ? 'opacity-30' : ''}">Dispatch Order</button>
+                        </div>
+                    </aside>
+                </div>
+            `;
+        }
+
+        function render() {
+            let list = state.activeCategory === 'All' ? MENU : MENU.filter(i => i.category === state.activeCategory);
+
+            root.innerHTML = `
+                <div class="min-h-screen flex flex-col">
+                    ${Header()}
+                    <main class="container mx-auto px-4 py-6 flex-grow">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-black royal-font text-white">
+                                ${state.activeCategory === 'All' ? 'Signature Dishes' : state.activeCategory}
+                            </h2>
+                        </div>
+                        
+                        <div class="flex gap-2 overflow-x-auto hide-scroll pb-4 mb-2">
+                            ${['All', 'Soup', 'BBQ', 'Chaap', 'Pav Bhaji', 'Rice', 'Pasta', 'Noodles'].map(c => `
+                                <button class="cat-btn px-4 py-2 rounded-lg text-[10px] font-bold border border-white/20 whitespace-nowrap transition-all ${state.activeCategory === c ? 'bg-white text-[#A40046]' : 'text-white'}" data-cat="${c}">${c}</button>
+                            `).join('')}
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            ${list.map((item, idx) => MenuItem(item, idx)).join('')}
+                        </div>
+                    </main>
+
+                    ${AiraTrigger()}
+                    ${ChatInterface()}
+                    ${CartDrawer()}
+
+                    <footer class="py-12 text-center opacity-30">
+                        <p class="text-[9px] font-black tracking-widest text-white">NAई बहु × NEXT-GEN CULINARY</p>
+                    </footer>
+                </div>
+            `;
+
+            const chatScroller = document.getElementById('chat-scroller');
+            if (chatScroller) chatScroller.scrollTop = chatScroller.scrollHeight;
+
+            attachEvents();
+        }
+
+        function attachEvents() {
+            // Aira Interaction
+            document.getElementById('aira-trigger')?.addEventListener('click', () => { state.isAiraActive = true; render(); });
+            document.getElementById('close-chat')?.addEventListener('click', () => { state.isAiraActive = false; render(); });
+
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const val = btn.dataset.val;
+                    state.airaChat.push({ sender: 'user', text: val, type: 'text' });
+                    state.isThinking = true;
+                    render();
+
+                    setTimeout(() => {
+                        state.isThinking = false;
+                        if (!state.currentMood) {
+                            state.currentMood = val;
+                            const picks = MENU.filter(m => m.mood.includes(val)).slice(0, 3);
+                            state.airaChat.push({ 
+                                sender: 'aira', 
+                                text: `I understand! Since you're feeling ${val.toLowerCase()}, I highly recommend these for you:`, 
+                                type: 'food_cards',
+                                items: picks
+                            });
+                            state.airaChat.push({ 
+                                sender: 'aira', 
+                                text: "Would you like to explore something else or are these perfect?", 
+                                type: 'options',
+                                options: ['More Options', 'Reset Chat']
+                            });
+                        } else if (val === 'Reset Chat') {
+                            state.currentMood = null;
+                            state.airaChat = [state.airaChat[0]];
+                        } else if (val === 'More Options') {
+                             state.airaChat.push({ 
+                                sender: 'aira', 
+                                text: "I can look into our Sizzlers or BBQ specials too! How about that?", 
+                                type: 'options', 
+                                options: ['Show BBQ', 'Show Sizzlers', 'Reset Chat'] 
+                            });
+                        } else if (val.includes('Show')) {
+                            const cat = val.split(' ')[1];
+                            const picks = MENU.filter(m => m.category === cat).slice(0, 3);
+                            state.airaChat.push({ 
+                                sender: 'aira', 
+                                text: `Here are our best ${cat} items:`, 
+                                type: 'food_cards',
+                                items: picks
+                            });
+                            state.airaChat.push({ 
+                                sender: 'aira', 
+                                text: "Anything else, boss?", 
+                                type: 'options',
+                                options: ['Reset Chat']
+                            });
+                        }
+                        render();
+                    }, 1200);
+                });
+            });
+
+            // Add from Aira Chat
+            document.querySelectorAll('.add-btn-aira').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = btn.dataset.id;
+                    const item = MENU.find(m => m.id == id);
+                    if (state.cart[id]) state.cart[id].quantity++;
+                    else state.cart[id] = { ...item, quantity: 1 };
+                    triggerConfetti();
+                    render();
+                });
+            });
+
+            // Cart & Menu Events
+            document.getElementById('cart-btn')?.addEventListener('click', () => { state.isCartOpen = true; render(); });
+            document.getElementById('close-cart-drawer')?.addEventListener('click', () => { state.isCartOpen = false; render(); });
+            
+            document.querySelectorAll('.qty-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.dataset.id;
+                    state.cart[id].quantity += parseInt(btn.dataset.v);
+                    if (state.cart[id].quantity <= 0) delete state.cart[id];
+                    render();
+                });
+            });
+
+            document.getElementById('checkout')?.addEventListener('click', () => {
+                if(Object.keys(state.cart).length === 0) return;
+                triggerConfetti();
+                alert(`Order Success! Table ${state.tableNumber} is ready.`);
+                state.cart = {};
+                state.isCartOpen = false;
+                render();
+            });
+
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.activeCategory = btn.dataset.cat;
+                    render();
+                });
+            });
+
+            document.querySelectorAll('.add-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = btn.dataset.id;
+                    const item = MENU.find(m => m.id == id);
+                    if (state.cart[id]) state.cart[id].quantity++;
+                    else state.cart[id] = { ...item, quantity: 1 };
+                    flyToCart(btn);
+                    setTimeout(render, 400);
+                });
+            });
+
+            document.getElementById('table-select')?.addEventListener('change', (e) => {
+                state.tableNumber = e.target.value;
+            });
+        }
+
+        render();
+    </script>
+</body>
+</html>
