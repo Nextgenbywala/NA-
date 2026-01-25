@@ -600,6 +600,14 @@
             transform: none;
         }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
 </head>
 
 <body class="min-h-screen">
@@ -610,7 +618,7 @@
     <!-- Sidebar Menu -->
     <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white text-slate-800 p-6 z-40 transform -translate-x-full no-print shadow-2xl">
         <div class="flex justify-center mb-8">
-            <img src="Logo2.png" alt="Aambli Restaurant" class="h-12 w-auto">
+            <h2 class="text-2xl font-bold royal text-blue-800">AAMBLI</h2>
         </div>
         
         <nav class="flex flex-col space-y-4">
@@ -798,6 +806,7 @@
     </div>
 
     <script>
+        // Updated deployment URL as requested
         const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3ZQzvUA4wZYWu1vbEBXRk-hcbLjRTUbMVGmt3l-wyyrZ8uft7nvlyrCpfisAZSnYO/exec";
         let allOrders = [], completedOrders = [];
         let currentFilter = 'all', currentTab = 'orders';
@@ -843,19 +852,31 @@
                 const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=getOrders`);
                 if (response.ok) {
                     const data = await response.json();
-                    let fetchedOrders = (data.orders || []).filter(order => order.status !== 'completed');
+                    
+                    // Handle both 'liveOrders' and 'orders' keys for robustness
+                    let rawOrders = data.liveOrders || data.orders || [];
+                    
+                    // Map and parse itemsJSON for all fetched orders
+                    let fetchedOrders = rawOrders.map(order => {
+                        // Ensure items is an array (parse itemsJSON if items doesn't exist)
+                        if (!order.items && order.itemsJSON) {
+                            try { order.items = JSON.parse(order.itemsJSON); } catch(e) { order.items = []; }
+                        } else if (!order.items) {
+                            order.items = [];
+                        }
+                        return order;
+                    }).filter(order => order.status !== 'completed');
                     
                     // Merge server data with local overrides
                     let mergedOrders = fetchedOrders.map(order => {
                         const localState = localOrderStates[order.orderNumber];
                         if (localState) {
-                            // Merge local status and other local properties over server data
                             return { ...order, ...localState };
                         }
                         return order;
                     });
                     
-                    // Filter out orders marked as completed locally (so they don't reappear until server catches up)
+                    // Filter out orders marked as completed locally
                     let activeOrders = mergedOrders.filter(order => order.status !== 'completed');
 
                     completedOrders = data.completedOrders || [];
@@ -1024,55 +1045,53 @@
         }
         
         async function updateOrderStatus(orderNumber, newStatus) {
-            // Optimistic UI Update: Update the local state and UI immediately
+            // Optimistic UI Update
             const orderIndex = allOrders.findIndex(order => order.orderNumber === orderNumber);
             if (orderIndex === -1) { alert('Order not found!'); return; }
 
-            // 1. Update UI immediately
+            // Update UI immediately
             allOrders[orderIndex].status = newStatus;
             allOrders[orderIndex].lastUpdated = new Date().toISOString();
 
-            // 2. Persist to Local Storage (Source of Truth for intermediate statuses)
+            // Persist to Local Storage
             if (!localOrderStates[orderNumber]) localOrderStates[orderNumber] = {};
             localOrderStates[orderNumber].status = newStatus;
             localOrderStates[orderNumber].lastUpdated = new Date().toISOString();
             localStorage.setItem('localOrderStates', JSON.stringify(localOrderStates));
 
-            // 3. Render updates instantly
+            // Render updates instantly
             updateTableStatus();
             renderOrders();
             renderTablesGrid();
             updateStats();
             showNotification(`Order #${orderNumber} updated to ${newStatus.toUpperCase()}`);
-
-            // 4. NO FETCH CALL to Google Sheet for intermediate statuses as requested.
         }
 
         async function completeOrder(orderNumber) {
-             // Optimistic UI Update: Remove/Complete the order locally immediately
+            // Optimistic completion
             const orderIndex = allOrders.findIndex(order => order.orderNumber === orderNumber);
             if (orderIndex === -1) { alert('Order not found!'); return; }
 
             const completedTime = new Date().toISOString();
 
-            // 1. Mark locally as completed
+            // Mark locally as completed
             allOrders[orderIndex].status = 'completed';
             allOrders[orderIndex].completedAt = completedTime;
 
-             // 2. Persist to Local Storage (so it stays gone if user refreshes before server sync)
+            // Persist to Local Storage
             if (!localOrderStates[orderNumber]) localOrderStates[orderNumber] = {};
             localOrderStates[orderNumber].status = 'completed';
             localOrderStates[orderNumber].completedAt = completedTime;
             localStorage.setItem('localOrderStates', JSON.stringify(localOrderStates));
 
-            // 3. Render updates instantly
+            // Render updates instantly
             updateTableStatus();
             renderOrders();
             renderTablesGrid();
             updateStats();
             showNotification(`Order #${orderNumber} completed!`);
 
-            // 4. Send request in background (Required for completion)
+            // Send request in background
             try {
                 const response = await fetch(GOOGLE_APPS_SCRIPT_URL, { 
                     method: 'POST', 
@@ -1088,42 +1107,13 @@
                 }
             } catch (error) { 
                 console.error('Error completing order:', error); 
-                // Don't alert failure aggressively as it is saved locally and will be consistent for this user.
             }
         }
 
         function filterOrders(status) {
             currentFilter = status;
-            // This logic simply makes the clicked button the primary one for visual feedback.
-            document.querySelectorAll('.filter-btn').forEach(btn => { 
-                btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
-                btn.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-300', 'hover:bg-slate-100');
-            });
-            
-            const targetButton = event.target;
-            targetButton.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-300', 'hover:bg-slate-100');
-            
-            const colorClasses = {
-                all: ['bg-blue-600', 'text-white', 'hover:bg-blue-700'],
-                new: ['bg-red-500', 'text-white', 'hover:bg-red-600'],
-                preparing: ['bg-orange-500', 'text-white', 'hover:bg-orange-600'],
-                ready: ['bg-green-500', 'text-white', 'hover:bg-green-600'],
-                delivered: ['bg-indigo-500', 'text-white', 'hover:bg-indigo-600']
-            };
             
             // Re-apply original or active styles
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                const btnStatus = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
-                if (btnStatus === status) {
-                    btn.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-300', 'hover:bg-slate-100');
-                    btn.classList.add(...colorClasses[btnStatus]);
-                } else {
-                     btn.classList.remove(...colorClasses[btnStatus]);
-                     btn.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-300', 'hover:bg-slate-100');
-                }
-            });
-
-            // A simplified approach from the original code that wasn't working correctly with the new theme
             const allBtn = document.querySelector('button[onclick*="\'all\'"]');
             const newBtn = document.querySelector('button[onclick*="\'new\'"]');
             const prepBtn = document.querySelector('button[onclick*="\'preparing\'"]');
@@ -1184,7 +1174,7 @@
             const total = currentInvoiceOrders.reduce((s, o) => s + parseInt(o.total), 0);
             const allItems = currentInvoiceOrders.flatMap(o => o.items.map(item => ({...item, orderNumber: o.orderNumber })));
             const date = new Date().toLocaleDateString('en-IN'), time = new Date().toLocaleTimeString('en-IN');
-            const content = `<div style="text-align: center; margin-bottom: 10px;"><div style="font-size: 14px; font-weight: bold;">NAई बहु</div><div style="font-size: 10px;">NextGen Technology</div><div class="kot-line"></div></div><div style="text-align: left; font-size: 9px; margin-bottom: 6px;"><div style="display: flex; justify-content: space-between;"><span>Table: ${tableNumber}</span><span>Date: ${date}</span></div><div style="display: flex; justify-content: space-between;"><span>${isCombined ? 'Combined Bill' : 'Bill'}</span><span>Time: ${time}</span></div></div><div class="kot-line"></div><div style="font-size: 9px; display: flex; justify-content: space-between; font-weight: bold; margin: 3px 0;"><span>ITEM</span><span>QTY</span><span>AMT</span></div><div class="kot-line"></div><div style="font-size: 8px;">${allItems.map(item => `<div><div style="display: flex; justify-content: space-between;"><span>${item.name}</span><span>${item.quantity}</span><span>₹${item.price * item.quantity}</span></div>${item.customizations ? `<div style="font-size: 7px; color: #666;">${item.customizations.join(', ')}</div>` : ''}</div>`).join('')}</div><div class="kot-line"></div><div style="font-size: 11px; font-weight: bold; text-align: right; margin: 5px 0;">TOTAL: ₹${total}</div><div class="kot-line"></div><div style="text-align: center; font-size: 8px; margin-top: 6px;">Thank you!</div>`;
+            const content = `<div style="text-align: center; margin-bottom: 10px;"><div style="font-size: 14px; font-weight: bold;">AAMBLI RESTAURANT</div><div style="font-size: 10px;">NextGen Technology</div><div class="kot-line"></div></div><div style="text-align: left; font-size: 9px; margin-bottom: 6px;"><div style="display: flex; justify-content: space-between;"><span>Table: ${tableNumber}</span><span>Date: ${date}</span></div><div style="display: flex; justify-content: space-between;"><span>${isCombined ? 'Combined Bill' : 'Bill'}</span><span>Time: ${time}</span></div></div><div class="kot-line"></div><div style="font-size: 9px; display: flex; justify-content: space-between; font-weight: bold; margin: 3px 0;"><span>ITEM</span><span>QTY</span><span>AMT</span></div><div class="kot-line"></div><div style="font-size: 8px;">${allItems.map(item => `<div><div style="display: flex; justify-content: space-between;"><span>${item.name}</span><span>${item.quantity}</span><span>₹${item.price * item.quantity}</span></div>${item.customizations ? `<div style="font-size: 7px; color: #666;">${item.customizations.join(', ')}</div>` : ''}</div>`).join('')}</div><div class="kot-line"></div><div style="font-size: 11px; font-weight: bold; text-align: right; margin: 5px 0;">TOTAL: ₹${total}</div><div class="kot-line"></div><div style="text-align: center; font-size: 8px; margin-top: 6px;">Thank you!</div>`;
             document.getElementById('invoice-content').innerHTML = content;
             document.getElementById('invoice-overlay').classList.add('open');
         }
@@ -1201,11 +1191,8 @@
                 const orderIdx = allOrders.findIndex(o => o.orderNumber === invOrder.orderNumber);
                 if (orderIdx !== -1 && !allOrders[orderIdx].invoiceGeneratedAt) { 
                     allOrders[orderIdx].invoiceGeneratedAt = time; 
-                    
-                     // Update Local Storage
                     if (!localOrderStates[invOrder.orderNumber]) localOrderStates[invOrder.orderNumber] = {};
                     localOrderStates[invOrder.orderNumber].invoiceGeneratedAt = time;
-                    
                     updated = true; 
                 }
             });
