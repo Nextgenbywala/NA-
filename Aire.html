@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,576 +24,1433 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
     <style>
-        :root {
-            --primary: #A40046;
-            --primary-dark: #830038;
-            --royal-gold: #C0A062;
-            --crema: #F5EFE6;
-            --whatsapp-bg: #e5ddd5;
-            --aira-bubble: #ffffff;
-            --user-bubble: #dcf8c6;
-            --wa-green: #075e54;
-            --wa-light-green: #25d366;
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        html, body {
+        html {
             width: 100%;
-            height: 100%;
             overflow-x: hidden;
             scroll-behavior: smooth;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--primary);
+            background-color: #A40046;
             background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.07'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             color: white;
             -webkit-font-smoothing: antialiased;
-        }
-
-        .royal-font { font-family: 'Playfair Display', serif; }
-
-        /* Animations */
-        @keyframes message-in {
-            0% { opacity: 0; transform: translateY(10px) scale(0.95); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .stagger-item {
-            opacity: 0;
-            animation: message-in 0.4s ease-out forwards;
-        }
-
-        @keyframes pulse-soft {
-            0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-            50% { transform: scale(1.05); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
-        }
-
-        .aira-pulse {
-            animation: pulse-soft 3s infinite ease-in-out;
-        }
-
-        .btn-haptic:active { transform: scale(0.94); }
-
-        /* WhatsApp Style Chat */
-        .chat-container {
-            position: fixed;
-            bottom: 0;
-            right: 0;
+            -moz-osx-font-smoothing: grayscale;
             width: 100%;
-            height: 90%;
-            background: var(--whatsapp-bg);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            transform: translateY(100%);
-            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-            border-radius: 2rem 2rem 0 0;
-            box-shadow: 0 -15px 50px rgba(0,0,0,0.6);
-            overflow: hidden;
-        }
-
-        .chat-container.active { transform: translateY(0); }
-
-        .chat-header {
-            background: var(--wa-green);
-            color: white;
-            padding: 1rem 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        .aira-avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-
-        .chat-messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 1.2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-repeat: repeat;
-            background-size: 400px;
-            background-attachment: local;
-        }
-
-        .message {
-            max-width: 85%;
-            padding: 0.7rem 0.9rem;
-            border-radius: 12px;
-            font-size: 0.92rem;
+            max-width: 100vw;
+            overflow-x: hidden;
             position: relative;
-            line-height: 1.4;
-            color: #111;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            animation: message-in 0.3s ease-out;
         }
 
-        .message-aira {
-            align-self: flex-start;
-            background: var(--aira-bubble);
-            border-top-left-radius: 2px;
+        .royal-font {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        /* Splash Screen Animations */
+        @keyframes splash-enter {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .splash-enter-active {
+            animation: splash-enter 1s ease-in-out forwards;
         }
 
-        .message-user {
-            align-self: flex-end;
-            background: var(--user-bubble);
-            border-top-right-radius: 2px;
+        @keyframes blur-to-visible {
+            0% {
+                opacity: 0;
+                filter: blur(10px);
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                filter: blur(0);
+                transform: scale(1);
+            }
+        }
+        .logo-animation {
+            animation: blur-to-visible 1.5s forwards;
         }
 
-        .recommendation-card {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            width: 240px;
-            margin-top: 5px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border: 1px solid #eee;
+        /* Cart Scrollbar */
+        .cart-items-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .cart-items-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+        .cart-items-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        /* Category Modal Animations */
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scale-up {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out forwards;
+        }
+        .animate-scale-up {
+            animation: scale-up 0.3s ease-out forwards;
         }
 
-        .chat-input-area {
-            background: #f0f0f0;
-            padding: 1rem 0.8rem 2rem 0.8rem;
+        /* Item Detail Modal Animation */
+        .animate-modal-fade-in {
+             animation: fade-in 0.3s ease-out forwards;
+        }
+        .animate-modal-scale-up {
+            animation: scale-up 0.3s ease-out forwards;
+        }
+
+        /* Add To Cart Notification Animation */
+        @keyframes slide-down-fade-out {
+            0% {
+                opacity: 0;
+                transform: translateY(-100%);
+            }
+            15%, 85% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100%);
+            }
+        }
+        .animate-notification {
+            animation: slide-down-fade-out 3s ease-in-out forwards;
+        }
+        
+        /* Button Press Feedback */
+        .add-to-cart-btn, #send-order-btn, #floating-category-btn, #floating-cart-btn, #perform-search-btn, #clear-search-input-btn, #install-app-btn, #favorites-btn {
+            transition: transform 0.1s ease-out;
+        }
+        .add-to-cart-btn:active, #send-order-btn:active, #floating-category-btn:active, #floating-cart-btn:active, #perform-search-btn:active, #clear-search-input-btn:active, #install-app-btn:active, #favorites-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Cart Item Entry Animation */
+        @keyframes fade-in-slide-right {
+            from { opacity: 0; transform: translateX(-15px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .cart-item-enter {
+            animation: fade-in-slide-right 0.4s ease-out forwards;
+        }
+
+        /* Category Slider Styling & Animations */
+        .category-slider-container::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for Chrome, Safari and Opera */
+        }
+        .category-slider-container {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+            scroll-snap-type: x mandatory; /* Makes scrolling feel polished */
+        }
+        .category-slider-item {
+            scroll-snap-align: start; /* Aligns items to the start on scroll */
+            opacity: 0; /* Start hidden for animation */
+            transform: translateY(30px) scale(0.95); /* Start lower and smaller for a 'pop' effect */
+            transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .category-slider-item.is-visible {
+            opacity: 1; /* Fade in */
+            transform: translateY(0) scale(1); /* Slide up and scale to full size */
+            transition-property: transform, box-shadow; /* Only transition these on hover */
+            transition-duration: 0.3s;
+            transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .category-slider-item.is-visible:hover {
+            transform: scale(1.08) rotate(2deg); /* A more dynamic scale and slight rotation */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 25px rgba(164, 0, 70, 0.5); /* Add a pink glow */
+        }
+        .category-slider-item h4 {
+            transition: transform 0.3s ease-out, text-shadow 0.3s ease-out;
+        }
+        .category-slider-item.is-visible:hover h4 {
+            transform: translateY(-4px); /* Make text pop up a bit */
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Add shadow to text for readability */
+        }
+        
+        /* Favorite Button Animation */
+        .favorite-toggle-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* AIRA ASSISTANT STYLES */
+        @keyframes aira-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .aira-float { animation: aira-float 4s ease-in-out infinite; }
+
+        @keyframes aira-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+        .aira-btn-pulse { animation: aira-pulse 2s infinite; }
+
+        .aira-chat-bubble {
+            position: relative;
+            background: #fff;
+            border-radius: 1.5rem;
+            color: #A40046;
+            padding: 1.25rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            max-width: 310px;
+            width: calc(100vw - 3rem);
+            max-height: 520px;
             display: flex;
             flex-direction: column;
-            gap: 0.8rem;
-            border-top: 1px solid #ddd;
         }
-
-        .chat-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            justify-content: center;
-        }
-
-        .option-btn {
-            background: white;
-            color: var(--wa-green);
-            padding: 0.6rem 1.4rem;
-            border-radius: 2rem;
-            border: 1px solid #e0e0e0;
-            font-size: 0.88rem;
-            font-weight: 700;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s;
-        }
-
-        .option-btn:hover {
-            border-color: var(--wa-green);
-            background: #f9f9f9;
-        }
-
-        .hide-scroll::-webkit-scrollbar { display: none; }
-
-        @keyframes flying {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), var(--ty)) scale(0.1); opacity: 0; }
-        }
-
-        .flying-item {
-            position: fixed;
-            z-index: 9999;
-            pointer-events: none;
-            animation: flying 0.6s ease-in forwards;
+        .aira-chat-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 25px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #fff;
         }
 
         .typing-dots {
             display: inline-flex;
-            gap: 3px;
+            gap: 2px;
+            align-items: center;
         }
-        .dot {
+        .typing-dots span {
             width: 4px;
             height: 4px;
-            background: #999;
+            background-color: #A40046;
             border-radius: 50%;
-            animation: dot-pulse 1s infinite alternate;
+            animation: dot-pulse 1.5s infinite ease-in-out;
         }
-        .dot:nth-child(2) { animation-delay: 0.3s; }
-        .dot:nth-child(3) { animation-delay: 0.6s; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 
         @keyframes dot-pulse {
-            from { opacity: 0.3; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1.1); }
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.5); opacity: 1; }
         }
 
+        .mood-btn {
+            background: #F5EFE6;
+            color: #A40046;
+            border: 2px solid #C0A062;
+            padding: 0.4rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .mood-btn:hover { background: #A40046; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(164, 0, 70, 0.3); }
+        
+        .chat-option-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.6rem 1rem;
+            background: #fdfaf5;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.4rem;
+            color: #5D4037;
+            transition: all 0.2s;
+        }
+        .chat-option-btn:hover { background: #fff; border-color: #A40046; color: #A40046; transform: scale(1.02); }
+
+        .aira-history-area {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 4px;
+        }
+        .aira-history-area::-webkit-scrollbar { width: 3px; }
+        .aira-history-area::-webkit-scrollbar-thumb { background: #EAE3D9; border-radius: 4px; }
+
+        /* TIC TAC TOE STYLES */
+        .ttt-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            margin-top: 10px;
+        }
+        .ttt-cell {
+            aspect-ratio: 1;
+            background: #f8f8f8;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .ttt-cell:hover { background: #fff; }
+        .ttt-cell.x { color: #A40046; }
+        .ttt-cell.o { color: #C0A062; }
+
+        /* HUNGER TAP GAME */
+        .hunger-game-container {
+            text-align: center;
+            padding: 10px 0;
+        }
+        .hunger-bar-bg {
+            width: 100%;
+            height: 12px;
+            background: #eee;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .hunger-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #A40046, #FF4D94);
+            transition: width 0.3s;
+        }
+        .aira-tap-target {
+            width: 80px;
+            height: 80px;
+            margin: 15px auto;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .aira-tap-target:active { transform: scale(1.2); }
+        
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3"
-  }
-}
-</script>
 </head>
 
 <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
 
     <script type="module">
-        const TABLE_NUMBERS = [1, 2, 5, 10, 18, 24];
+        // --- PWA Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    }, err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        // --- Global PWA Install Prompt Event ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (typeof state !== 'undefined') {
+                state.isInstallable = true;
+                renderApp();
+            }
+        });
+
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('INSTALL: Success');
+            if (typeof state !== 'undefined') {
+                state.isInstallable = false;
+                renderApp();
+            }
+        });
+
+        // --- CONSTANTS ---
+        const GOOGLE_APPS_SCRIPT_URL = '';
+        const TABLE_NUMBERS = [1, 2, 3, 4, 5, 10, 15, 20];
 
         const MENU = [
-            { id: 1, name: 'Manchow Soup', price: 100, description: 'Spicy Indo-Chinese classic with crispy noodles.', image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&q=80&w=400', category: 'Soup', mood: ['Sad', 'Energetic'], spice: 'Fiery' },
-            { id: 5, name: 'Paneer Tikka', price: 250, description: 'Grilled chunks of paneer marinated in royal spices.', image: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&q=80&w=400', category: 'BBQ', mood: ['Happy', 'Relaxed'], spice: 'Classic' },
-            { id: 11, name: 'Masala Chaap', price: 240, description: 'Soya chaap marinated in spicy tandoori masala.', image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&q=80&w=400', category: 'Chaap', mood: ['Energetic'], spice: 'Classic' },
-            { id: 20, name: 'Fry Momos', price: 150, description: 'Crispy veg dumplings served with spicy garlic dip.', image: 'https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?auto=format&fit=crop&q=80&w=400', category: 'Momos', mood: ['Happy'], spice: 'Fiery' },
-            { id: 24, name: 'Red Sauce Pasta', price: 250, description: 'Penne tossed in tangy Italian tomato basil sauce.', image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&q=80&w=400', category: 'Pasta', mood: ['Happy', 'Relaxed'], spice: 'Mild' },
-            { id: 27, name: 'Pav Bhaji', price: 100, description: 'Buttery mashed veg medley with soft toasted buns.', image: 'https://images.unsplash.com/photo-1626132646529-500637532537?auto=format&fit=crop&q=80&w=400', category: 'Pav Bhaji', mood: ['Happy', 'Sad'], spice: 'Classic' },
-            { id: 32, name: 'Chhole Bhature', price: 160, description: 'Authentic Punjabi spiced chickpeas with fluffy bread.', image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=400', category: 'Chhole Special', mood: ['Happy'], spice: 'Classic' },
-            { id: 40, name: 'Paneer Chilli', price: 250, description: 'Wok-tossed paneer cubes in spicy soy-chilli glaze.', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&q=80&w=400', category: 'Chinese Special', mood: ['Energetic'], spice: 'Fiery' },
-            { id: 47, name: 'Hakka Noodles', price: 150, description: 'Stir-fried noodles with fresh garden vegetables.', image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&q=80&w=400', category: 'Noodles', mood: ['Relaxed'], spice: 'Mild' },
-            { id: 53, name: 'Fried Rice', price: 130, description: 'Classic wok-fried rice with assorted vegetables.', image: 'https://images.unsplash.com/photo-1512058560366-cd2427ba5e73?auto=format&fit=crop&q=80&w=400', category: 'Rice', mood: ['Relaxed'], spice: 'Mild' },
-            { id: 59, name: 'Masala Fries', price: 120, description: 'Crispy golden fries tossed in peri-peri masala.', image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&q=80&w=400', category: 'French Fries', mood: ['Energetic', 'Happy'], spice: 'Fiery' },
-            { id: 66, name: 'Cheese Butter Masala', price: 280, description: 'Rich creamy gravy with chunks of processed cheese.', image: 'https://images.unsplash.com/photo-1585937421612-71a00561a1c7?auto=format&fit=crop&q=80&w=400', category: 'Cheese Special', mood: ['Happy'], spice: 'Mild' },
-            { id: 73, name: 'Dal Makhani', price: 190, description: 'Slow-cooked black lentils with cream and butter.', image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&q=80&w=400', category: 'Dal Special', mood: ['Relaxed', 'Sad'], spice: 'Mild' },
-            { id: 76, name: 'Dum Matka Biryani', price: 250, description: 'Aromatic long-grain rice layered in a clay pot.', image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&q=80&w=400', category: 'Nawabo ki Biryani', mood: ['Happy', 'Relaxed'], spice: 'Classic' },
-            { id: 82, name: 'Paneer Butter Masala', price: 270, description: 'Velvety tomato gravy with soft paneer cubes.', image: 'https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?auto=format&fit=crop&q=80&w=400', category: 'Paneer Special', mood: ['Happy', 'Relaxed'], spice: 'Mild' },
-            { id: 98, name: 'Hamari Pahechan', price: 700, description: 'Our signature jumbo sizzler platter with 7 items.', image: 'https://images.unsplash.com/photo-1544124499-58912cbddaad?auto=format&fit=crop&q=80&w=400', category: 'Sizzlers', mood: ['Happy', 'Energetic'], spice: 'Classic' }
+            { id: 1, name: 'Manchow Soup', price: 100, description: 'A popular hot and spicy Indo-Chinese soup, packed with finely chopped vegetables.', image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=300&q=80', category: 'Soup', searchTerms: ['manchow', 'soup', 'veg', 'spicy', 'comforting'] },
+            { id: 2, name: 'Hot & Sour Soup', price: 100, description: 'A tangy and spicy soup made with mixed vegetables, vinegar, soy sauce, and aromatic seasonings.', image: 'https://images.unsplash.com/photo-1582819509237-45b754223abd?auto=format&fit=crop&w=300&q=80', category: 'Soup', searchTerms: ['hot', 'sour', 'soup', 'veg', 'spicy', 'adventurous'] },
+            { id: 3, name: 'Manchurian Soup', price: 120, description: 'A flavorful Indo-Chinese soup with vegetable manchurian balls simmered in a spicy and tangy broth.', image: 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=300&q=80', category: 'Soup', searchTerms: ['manchurian', 'soup', 'veg', 'chinese', 'comforting'] },
+            { id: 4, name: 'Lemon Corriander Soup', price: 100, description: 'A light and refreshing soup flavored with lemon juice, fresh coriander, and assorted vegetables.', image: 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?auto=format&fit=crop&w=300&q=80', category: 'Soup', searchTerms: ['lemon', 'coriander', 'soup', 'veg', 'healthy', 'refreshing'] },
+            { id: 5, name: 'Clear Veg Soup', price: 90, description: 'Healthy mixed vegetable clear soup.', image: 'https://images.unsplash.com/photo-1547592115-37326a275462?auto=format&fit=crop&w=300&q=80', category: 'Soup', searchTerms: ['clear', 'healthy', 'soup', 'refreshing'] }
         ];
 
+        const popularSearches = ['Manchow', 'Spicy', 'Chinese', 'Healthy'];
+        const searchSuggestions = [...new Set(MENU.flatMap(item => [item.name, ...item.searchTerms, item.category]))];
+        
+        const categoryImages = {
+            'All': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=300&q=80',
+            'Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=300&q=80'
+        };
+
+        const MOOD_MAP = {
+            '🔥 Spicy': ['spicy'],
+            '🥗 Healthy': ['healthy'],
+            '😌 Comforting': ['comforting'],
+            '🍃 Refreshing': ['refreshing']
+        };
+
+        const TRIVIA = [
+            "Did you know? Tomato soup was first mentioned in a cookbook in 1857!",
+            "Fun Fact: Manchow soup is actually an Indo-Chinese creation, rarely found in mainland China!",
+            "Health Tip: Lemon coriander soup is great for immunity due to high Vitamin C.",
+            "Did you know? The world's largest bowl of soup was 26,000 liters!",
+            "History: Manchurian dishes were invented in Mumbai by Nelson Wang in 1975."
+        ];
+
+        // --- STATE MANAGEMENT ---
         let state = {
+            showSplash: true,
             cart: {},
             isCartOpen: false,
-            tableNumber: 18,
+            isSearchOpen: false,
+            tableNumber: TABLE_NUMBERS[0] || '',
+            message: null,
+            previousOrder: JSON.parse(localStorage.getItem('previousOrder')) || null,
+            userInfo: JSON.parse(localStorage.getItem('airaUserInfo')) || null,
             activeCategory: 'All',
-            isAiraActive: false,
-            airaChat: [
-                { sender: 'aira', text: "Namaste! I'm Aira. How's your mood today? I'll find the perfect dish for you.", type: 'options', options: ['Happy', 'Sad', 'Hungry', 'Relaxed'] }
-            ],
-            currentMood: null,
-            isThinking: false
+            searchResults: null,
+            searchQueryDisplay: '',
+            isCategoryModalOpen: false,
+            isFloatingCategoryButtonVisible: false,
+            isFloatingCartButtonVisible: false,
+            orderJustSent: false,
+            lastAddedItem: null,
+            notificationKey: 0,
+            selectedItem: null,
+            isInstallable: false,
+            favorites: JSON.parse(localStorage.getItem('favorites')) || [],
+            showFavorites: false,
+            // AIRA STATE
+            isAiraOpen: false,
+            airaMode: 'greeting', // greeting, mood, suggestions, ordered, name_input, gender_input, birthday_input, companion_check, companion_type, game_ttt, game_tap, trivia
+            airaMessage: "",
+            airaIsTyping: false,
+            // GAME STATE
+            tttBoard: Array(9).fill(null),
+            tttStatus: 'playing', // playing, win, draw
+            hungerScore: 0
         };
 
         const root = document.getElementById('root');
-        const AIRA_AVATAR = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtgNCTLmk6KtXF-sIDFxBQlKTb0eLie9WOHMtr92zXRw&s';
 
-        // --- UTILS ---
-        function triggerConfetti() {
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#A40046', '#C0A062'] });
-        }
+        // --- RENDER FUNCTIONS ---
 
-        function flyToCart(startElement) {
-            const rect = startElement.getBoundingClientRect();
-            const cartBtn = document.getElementById('cart-btn');
-            const cartRect = cartBtn.getBoundingClientRect();
-            const flying = document.createElement('div');
-            flying.className = 'flying-item w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg';
-            flying.style.left = `${rect.left + rect.width / 2}px`;
-            flying.style.top = `${rect.top + rect.height / 2}px`;
-            flying.style.setProperty('--tx', `${cartRect.left - rect.left}px`);
-            flying.style.setProperty('--ty', `${cartRect.top - rect.top}px`);
-            flying.innerText = '+';
-            document.body.appendChild(flying);
-            setTimeout(() => flying.remove(), 600);
-        }
+        const SplashScreen = () => `
+            <div id="splash-screen" class="fixed top-0 left-0 w-screen h-screen bg-[#f2e3e3] flex justify-center items-center z-[1000] splash-enter-active">
+                <div class="flex justify-center items-center h-full w-full p-4 max-w-full logo-animation">
+                    <img src="Logo2.png" alt="Nai Bahu Logo" class="max-w-[80%] max-h-[50vh] h-auto block" />
+                </div>
+            </div>
+        `;
 
-        // --- COMPONENTS ---
-        const Header = () => `
-            <header class="sticky top-0 z-40 bg-[var(--primary)] shadow-md w-full border-b border-white/10">
-                <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <img src="naibahu.png" alt="Logo" class="h-8 filter invert" />
-                        <span class="font-extrabold text-lg royal-font tracking-tight">NAई बहु</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <select id="table-select" class="bg-white/10 text-white text-[11px] p-2 rounded-lg focus:outline-none border border-white/20">
-                            ${TABLE_NUMBERS.map(n => `<option value="${n}" ${state.tableNumber == n ? 'selected' : ''} class="text-black">T-${n}</option>`).join('')}
-                        </select>
-                        <button id="cart-btn" class="relative p-2 bg-white/10 rounded-lg text-white border border-white/20">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                            ${Object.keys(state.cart).length ? `<span class="absolute -top-1 -right-1 bg-white text-[#A40046] w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center">${Object.values(state.cart).reduce((a,b)=>a+b.quantity, 0)}</span>` : ''}
+        const Header = ({ tableNumber, cartCount, isInstallable, showFavorites, favoritesCount }) => `
+            <header class="sticky top-0 z-40 shadow-lg text-white w-full bg-[#A40046] border-b-2 border-[#C0A062]/60">
+                <nav class="container mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4 flex justify-between items-center">
+                    <a href="#" class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                        <img src="naibahu.png" alt="Logo" class="h-6 sm:h-8 lg:h-10 w-auto" />
+                        <span class="font-extrabold text-sm sm:text-lg lg:text-xl royal-font">NAई बहु</span>
+                    </a>
+                    <div class="flex items-center space-x-1 sm:space-x-2 lg:space-x-4">
+                        ${isInstallable ? `
+                            <button id="install-app-btn" class="relative p-2 sm:p-2.5 rounded-xl hover:bg-[#830038] transition-colors bg-[#C0A062] text-white shadow-md animate-pulse" title="Install App">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            </button>
+                        ` : ''}
+                        <div class="flex items-center space-x-1">
+                            <label for="table-number-select" class="text-sm font-medium hidden sm:inline">Table No:</label>
+                             <select id="table-number-select" class="w-24 sm:w-28 p-1 sm:p-2 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors text-[#A40046] bg-[#F5EFE6] font-semibold">
+                                ${TABLE_NUMBERS.map(num => `<option value="${num}" ${tableNumber == num ? 'selected' : ''}>Table ${num}</option>`).join('')}
+                            </select>
+                        </div>
+                        <button id="search-btn" class="relative p-2 sm:p-2.5 rounded-xl hover:bg-[#830038] transition-colors">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </button>
+                        <button id="favorites-btn" class="relative p-2 sm:p-2.5 rounded-xl hover:bg-[#830038] transition-colors ${showFavorites ? 'bg-[#830038] text-rose-200' : ''}">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${showFavorites ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                             ${favoritesCount > 0 ? `<span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-rose-600 rounded-full">${favoritesCount}</span>` : ''}
+                        </button>
+                        <button id="cart-btn" class="relative p-2 sm:p-2.5 rounded-xl hover:bg-[#830038] transition-colors">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                            ${cartCount > 0 ? `<span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-rose-600 rounded-full">${cartCount}</span>` : ''}
                         </button>
                     </div>
                 </nav>
             </header>
         `;
 
-        const AiraTrigger = () => `
-            <button id="aira-trigger" class="fixed bottom-6 left-6 z-50 aira-pulse w-14 h-14 rounded-full flex items-center justify-center border-2 border-white shadow-2xl btn-haptic overflow-hidden">
-                <img src="${AIRA_AVATAR}" class="w-full h-full object-cover" />
+        const MenuItemCard = ({ item, isFavorite }) => `
+            <div class="menu-item-card relative bg-[#F5EFE6] rounded-lg shadow-lg overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col border-2 border-[#C0A062]/50 cursor-pointer" data-item-id="${item.id}">
+                <button class="favorite-toggle-btn absolute top-2 right-2 z-20 p-1.5 rounded-full bg-white/90 shadow-sm hover:bg-white transition-transform hover:scale-110 active:scale-95" data-item-id="${item.id}">
+                     ${isFavorite 
+                        ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#A40046" stroke="#A40046" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`
+                        : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A40046" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`
+                     }
+                </button>
+                <div class="p-4 sm:p-5 flex-grow flex items-center gap-4">
+                    <img src="${item.image}" alt="${item.name}" class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg shadow-md flex-shrink-0 border-2 border-white/50" loading="lazy">
+                    <div class="flex-grow flex flex-col min-w-0 h-full">
+                        <h3 class="text-lg sm:text-xl font-bold royal-font text-[#A40046] truncate pr-8">${item.name}</h3>
+                        <p class="text-[#5D4037] text-xs sm:text-sm my-1 line-clamp-2 flex-grow">${item.description}</p>
+                        <div class="flex justify-between items-center mt-auto">
+                            <span class="text-xl sm:text-2xl font-bold font-sans text-[#5D4037]">
+                                <span class="text-sm font-normal align-middle">₹</span>${item.price}
+                            </span>
+                            <button class="add-to-cart-btn bg-[#A40046] text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-[#830038] text-xs sm:text-sm flex items-center gap-1.5" data-item-id="${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <span>Add</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const CategorySlider = ({ activeCategory }) => {
+            const categories = ['All', ...Object.keys(categoryImages).filter(c => c !== 'All')];
+            return `
+                <div class="col-span-1 md:col-span-2 my-6 md:my-8">
+                    <h3 class="text-xl font-bold royal-font mb-4 text-white px-2">Check Out More Food Sections</h3>
+                    <div class="category-slider-container flex items-center gap-4 overflow-x-auto pb-4 px-2">
+                        ${categories.map(category => `
+                            <div class="category-slider-item flex-shrink-0 w-32 h-40 rounded-lg shadow-lg relative overflow-hidden cursor-pointer group" data-category="${category}">
+                                <img src="${categoryImages[category]}" alt="${category}" class="w-full h-full object-cover" loading="lazy"/>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                <h4 class="absolute bottom-3 left-3 text-white font-bold royal-font">${category}</h4>
+                                ${activeCategory === category ? `
+                                    <div class="absolute top-2 right-2 bg-white text-[#A40046] rounded-full p-1 flex items-center justify-center">
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
+        const MenuSection = ({ activeCategory, searchResults, searchQueryDisplay, filteredMenu, showFavorites, favorites }) => {
+            const itemsToDisplay = searchResults !== null ? searchResults : filteredMenu;
+            
+            const menuItemsHtml = itemsToDisplay.reduce((acc, item, index) => {
+                const isFavorite = favorites.includes(item.id);
+                acc.push(MenuItemCard({ item, isFavorite }));
+                if (index === 4 && searchResults === null && !showFavorites) {
+                    acc.push(CategorySlider({ activeCategory }));
+                }
+                return acc;
+            }, []).join('');
+
+            return `
+                <div class="lg:col-span-2">
+                    ${searchResults !== null ? `
+                        <div class="flex justify-between items-center mb-4 sm:mb-6">
+                            <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold royal-font">Search Results for "${searchQueryDisplay}"</h2>
+                            <button id="clear-search-btn" class="text-sm text-rose-300 hover:text-white transition-colors">Clear Search</button>
+                        </div>
+                    ` : `
+                        <div class="flex justify-between items-center mb-2">
+                            <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold royal-font">${showFavorites ? 'Your Favorites' : 'Explore Our Menu'}</h2>
+                            ${!showFavorites ? `
+                            <button id="category-modal-trigger" class="flex items-center gap-2 bg-[#F5EFE6] text-[#A40046] px-4 py-2 rounded-full font-bold shadow-md hover:bg-white transition-colors transform hover:scale-105 border-2 border-[#C0A062]/50">
+                                <span>${activeCategory}</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                            ` : ''}
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 mb-6 text-gray-200 text-sm sm:text-base font-medium">
+                             <a href="https://maps.google.com/?q=Nai+Bahu+Restaurant" target="_blank" class="flex items-center gap-2 hover:text-[#C0A062] transition-colors w-fit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                <span class="underline underline-offset-2 decoration-[#C0A062]/60">View Location</span>
+                            </a>
+                            <div class="flex items-center gap-2 w-fit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                <span>5:00 p.m to 2:30 a.m</span>
+                            </div>
+                        </div>
+                    `}
+                    
+                    ${itemsToDisplay.length > 0 ? `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                            ${menuItemsHtml}
+                        </div>
+                    ` : `
+                        <div class="text-center py-10 sm:py-20 px-4 col-span-full">
+                            <p class="text-lg text-gray-300">${showFavorites ? "You haven't added any favorites yet." : `No items found for "${searchQueryDisplay}". Try a different search!`}</p>
+                            ${showFavorites ? `<button id="back-to-menu-btn" class="mt-4 bg-white text-[#A40046] px-6 py-2 rounded-full font-bold hover:bg-gray-100 transition-colors">Browse Menu</button>` : ''}
+                        </div>
+                    `}
+                </div>
+            `;
+        };
+        
+        const CategoryModal = ({ isOpen, activeCategory }) => {
+            if (!isOpen) return '';
+            const categories = ['All', 'Soup'];
+            return `
+                <div id="category-modal-overlay" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div class="bg-[#F5EFE6] rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-scale-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl royal-font font-bold text-[#5D4037]">Select a Category</h3>
+                            <button id="category-modal-close" class="p-2 rounded-full hover:bg-gray-200 text-gray-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            ${categories.map(category => `
+                                <div class="category-select-item relative rounded-lg overflow-hidden shadow-lg h-32 md:h-48 cursor-pointer group transform transition-transform duration-300 hover:scale-105" data-category="${category}">
+                                    <img src="${categoryImages[category] || categoryImages['All']}" alt="${category}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" loading="lazy"/>
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                                    <h4 class="absolute bottom-4 left-4 text-white text-lg md:text-xl font-bold royal-font">${category}</h4>
+                                    ${activeCategory === category ? `
+                                        <div class="absolute top-2 right-2 bg-white text-[#A40046] rounded-full p-1.5">
+                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const ItemDetailModal = ({ item }) => {
+            if (!item) return '';
+            return `
+                <div id="item-detail-overlay" class="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 animate-modal-fade-in">
+                    <div id="item-detail-content" class="bg-[#F5EFE6] text-[#5D4037] rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-modal-scale-up">
+                        <div class="relative flex-shrink-0">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-56 object-cover">
+                            <button id="modal-close-btn" class="absolute top-3 right-3 bg-white/70 text-gray-800 rounded-full p-2 hover:bg-white transition-colors z-10">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        <div class="p-6 flex-grow overflow-y-auto">
+                            <h3 class="text-3xl font-bold royal-font text-[#A40046] mb-2">${item.name}</h3>
+                            <p class="text-gray-600 mb-4 leading-relaxed">${item.description}</p>
+                        </div>
+                        <div class="p-6 border-t border-gray-200 flex justify-between items-center bg-white/50 flex-shrink-0">
+                            <span class="text-3xl font-bold font-sans text-[#5D4037]"><span class="text-xl align-middle">₹</span>${item.price}</span>
+                            <button class="modal-add-to-cart-btn bg-[#A40046] text-white px-5 py-3 rounded-full font-bold shadow-lg hover:bg-[#830038] text-sm flex items-center gap-2" data-item-id="${item.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <span>Add to Order</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const FollowUsSection = () => `
+            <div class="text-center py-8 px-4 flex flex-col items-center animate-fade-in">
+                <h4 class="text-lg font-bold royal-font text-[#A40046]">Thank You For Your Order!</h4>
+                <p class="text-gray-600 text-sm mt-2 mb-6">We hope you enjoyed your meal.</p>
+                <div class="w-full border-t border-gray-300 my-4"></div>
+                <h5 class="font-semibold text-gray-700 mb-4">Follow Us & Stay in Touch</h5>
+                <div class="flex items-center justify-center space-x-6 mb-6">
+                    <a href="https://www.instagram.com/aira.nextgen" target="_blank" class="text-gray-600 hover:text-[#A40046] transition-colors transform hover:scale-110">
+                        <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </a>
+                </div>
+                <div class="flex items-center text-gray-600">
+                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    <span class="ml-2 font-medium">92650 84656</span>
+                </div>
+            </div>
+        `;
+
+        const CartSidebar = ({ isOpen, cart, previousOrder, message, orderJustSent }) => {
+            const items = Object.values(cart);
+            const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            return `
+                <aside class="fixed top-0 right-0 w-full sm:max-w-sm md:max-w-md h-full bg-[#F5EFE6] text-[#5D4037] z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'} lg:sticky lg:top-24 lg:transform-none lg:h-auto lg:max-h-[calc(100vh-120px)] p-3 sm:p-4 lg:p-6 rounded-l-2xl lg:rounded-2xl shadow-2xl flex flex-col">
+                    ${previousOrder && !orderJustSent ? `
+                        <div class="mb-3 sm:mb-4 lg:mb-6">
+                            <h3 class="text-base sm:text-lg lg:text-xl royal-font font-semibold mb-2">Previous Order</h3>
+                            <div class="p-2 sm:p-3 lg:p-4 bg-[#EAE3D9] rounded-xl border border-gray-300">
+                                <p class="text-gray-500 text-xs mb-2">Order from ${new Date(previousOrder.timestamp).toLocaleDateString()}</p>
+                                ${previousOrder.items.map(item => `<div key="${item.id}" class="flex justify-between text-xs sm:text-sm"><span class="text-gray-600">${item.name} x ${item.quantity}</span><span class="font-medium text-gray-700">₹${item.price * item.quantity}</span></div>`).join('')}
+                                <div class="flex justify-between font-bold text-sm sm:text-base mt-2 pt-2 border-t border-gray-300"><span>Total</span><span>₹${previousOrder.total}</span></div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    <div class="flex justify-between items-center mb-3 sm:mb-4 lg:mb-6">
+                        <h3 class="text-lg sm:text-xl lg:text-2xl royal-font font-semibold">Your Order</h3>
+                        <button id="cart-close-btn" class="lg:hidden p-2 rounded-full hover:bg-gray-200 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                        </button>
+                    </div>
+                    <div class="flex-grow overflow-y-auto min-h-0 space-y-2 sm:space-y-3 cart-items-scrollbar pr-2">
+                        ${items.length === 0 ? (orderJustSent ? FollowUsSection() : `<div class="text-center text-gray-500 py-8">Your cart is empty.</div>`) : items.map((item, index) => `
+                            <div class="cart-item-enter flex items-center justify-between border-b border-gray-200 pb-2 sm:pb-3 last:border-b-0 last:pb-0" style="animation-delay: ${index * 50}ms">
+                                <div class="flex-1 min-w-0"><p class="font-medium text-sm lg:text-base truncate">${item.name}</p><p class="text-xs text-gray-500">₹${item.price} each</p></div>
+                                <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                                    <button class="quantity-change-btn bg-stone-200 text-gray-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-lg hover:bg-stone-300 transition-colors" data-item-id="${item.id}" data-change="-1">-</button>
+                                    <span class="font-semibold w-6 text-center text-sm lg:text-base">${item.quantity}</span>
+                                    <button class="quantity-change-btn bg-stone-200 text-gray-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-lg hover:bg-stone-300 transition-colors" data-item-id="${item.id}" data-change="1">+</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="mt-auto pt-3 sm:pt-4">
+                        <div class="pt-3 sm:pt-4 border-t border-gray-300">
+                            <div class="flex justify-between text-base sm:text-lg font-medium mb-2">
+                                <span>Total</span>
+                                <span>₹${total.toFixed(0)}</span>
+                            </div>
+                        </div>
+                        ${message ? `<div class="my-3 p-3 rounded-xl text-sm font-medium ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${message.text}</div>` : ''}
+                        <button id="send-order-btn" ${items.length === 0 ? 'disabled' : ''} class="w-full mt-3 py-3 px-6 rounded-xl text-white font-semibold transition-all duration-300 bg-[#A40046] hover:bg-[#830038] focus:outline-none focus:ring-4 focus:ring-rose-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
+                            <span id="send-order-text">Send Order</span>
+                        </button>
+                    </div>
+                </aside>
+            `;
+        };
+
+        const SearchModal = ({ isOpen }) => {
+            if (!isOpen) return '';
+            return `
+                <div id="search-modal-overlay" class="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-2">
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
+                        <div class="flex justify-between items-center mb-3 sm:mb-4">
+                            <h3 class="text-lg sm:text-xl lg:text-2xl royal-font font-semibold text-gray-800">Search Menu</h3>
+                            <button id="search-modal-close" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                            </button>
+                        </div>
+                        <input type="text" id="search-input" placeholder="Search for dishes..." class="bg-white border-2 border-gray-200 text-gray-800 text-base p-3 rounded-xl w-full transition-all duration-300 font-medium focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200" />
+                        <div id="search-content" class="flex-grow overflow-y-auto mt-4"></div>
+                        <div class="flex space-x-2 mt-4">
+                            <button id="perform-search-btn" class="flex-1 bg-[#A40046] text-white px-6 py-3 rounded-lg font-medium shadow-md hover:bg-[#830038]">Search</button>
+                            <button id="clear-search-input-btn" class="bg-gray-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-600">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+        
+        const FloatingCategoryButton = ({ isVisible }) => `
+            <button id="floating-category-btn" class="fixed bottom-8 right-6 z-40 w-14 h-14 bg-[#A40046] text-white rounded-full flex items-center justify-center shadow-lg transform transition-all duration-300 ease-in-out hover:bg-[#830038] focus:outline-none focus:ring-4 focus:ring-rose-300 lg:hidden ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
             </button>
         `;
 
-        const ChatInterface = () => `
-            <div id="aira-chat" class="chat-container ${state.isAiraActive ? 'active' : ''}">
-                <div class="chat-header">
-                    <img src="${AIRA_AVATAR}" class="aira-avatar" />
-                    <div class="flex-grow">
-                        <p class="font-bold text-sm">Aira Assistant</p>
-                        <p class="text-[10px] opacity-80">online</p>
+        const FloatingCartButton = ({ isVisible, cartCount }) => `
+            <button id="floating-cart-btn" class="fixed bottom-28 right-6 z-40 w-14 h-14 bg-white text-[#A40046] rounded-full flex items-center justify-center shadow-lg transform transition-all duration-300 ease-in-out hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-pink-200 lg:hidden ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                ${cartCount > 0 ? `<span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform bg-rose-600 rounded-full">${cartCount}</span>` : ''}
+            </button>
+        `;
+        
+        const AddToCartNotification = ({ itemName, key }) => {
+            if (!itemName) return '';
+            return `
+                <div key="${key}" class="fixed top-20 left-1/2 -translate-x-1/2 z-[100] animate-notification">
+                    <div class="flex items-center gap-4 bg-white/90 backdrop-blur-sm text-[#A40046] p-4 rounded-xl shadow-2xl border border-pink-200">
+                        <div class="bg-green-100 text-green-600 rounded-full p-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
+                        <div class="flex flex-col"><span class="font-bold">Added to Your Order!</span><span class="text-sm text-gray-600">${itemName}</span></div>
                     </div>
-                    <button id="close-chat" class="p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></button>
                 </div>
-                <div class="chat-messages hide-scroll" id="chat-scroller">
-                    ${state.airaChat.map(msg => `
-                        <div class="message ${msg.sender === 'aira' ? 'message-aira' : 'message-user'}">
-                            ${msg.text}
-                            ${msg.type === 'food_cards' ? `
-                                <div class="flex gap-3 overflow-x-auto hide-scroll pb-2 mt-2">
-                                    ${msg.items.map(item => `
-                                        <div class="recommendation-card">
-                                            <img src="${item.image}" class="h-28 w-full object-cover" />
-                                            <div class="p-3">
-                                                <div class="flex justify-between items-center mb-1">
-                                                    <p class="font-black text-[11px] text-[#A40046]">${item.name}</p>
-                                                    <p class="font-bold text-[10px]">₹${item.price}</p>
-                                                </div>
-                                                <button class="add-btn-aira w-full py-1.5 bg-[var(--wa-green)] text-white text-[10px] rounded-lg font-bold" data-id="${item.id}">Add to Order</button>
-                                            </div>
+            `;
+        };
+
+        const AiraAssistant = ({ isOpen, message, moodMap, mode, isTyping, tttBoard, tttStatus, userInfo, hungerScore }) => {
+            let displayMessage = message;
+            const isBoy = userInfo && userInfo.gender === 'male';
+            const isGirl = userInfo && userInfo.gender === 'female';
+            const name = userInfo ? userInfo.name : "human";
+
+            // Flirty logic for display
+            if (isOpen && !isTyping) {
+                if (isBoy) {
+                    displayMessage = displayMessage.replace('hey dear', `hey handsome ${name} ✨`);
+                } else if (isGirl) {
+                    displayMessage = displayMessage.replace('hey dear', `hey gorgeous ${name} 🌸`);
+                } else {
+                    displayMessage = displayMessage.replace('hey dear', `hey ${name}`);
+                }
+            }
+
+            return `
+            <div class="fixed bottom-6 left-6 z-[110] flex flex-col items-start gap-4">
+                ${isOpen ? `
+                    <div class="aira-chat-bubble animate-scale-up mb-2">
+                        <div class="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
+                            <div class="flex items-center gap-2">
+                                <img src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=aira&backgroundColor=ffffff" class="w-6 h-6 rounded-full border border-[#C0A062]">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-[#A40046] opacity-80">Aira • Your Bestie</span>
+                            </div>
+                            <button id="aira-close-btn" class="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                        </div>
+                        
+                        <div class="aira-history-area">
+                            ${isTyping ? `
+                                <div class="p-2 mb-2 bg-gray-50 rounded-xl w-fit">
+                                    <div class="typing-dots"><span></span><span></span><span></span></div>
+                                </div>
+                            ` : `
+                                <div class="text-sm font-semibold text-[#5D4037] leading-relaxed animate-fade-in">${displayMessage}</div>
+                            `}
+                            
+                            ${!isTyping ? `
+                                <div class="mt-4 space-y-2 animate-fade-in" style="animation-delay: 0.2s">
+                                    ${mode === 'greeting' ? `
+                                        <button class="chat-option-btn" id="aira-explore-mood">I'm feeling... (Choose Mood) 🎨</button>
+                                        <button class="chat-option-btn" id="aira-chat-setup">💬 Let's get to know each other</button>
+                                        <button class="chat-option-btn" id="aira-explore-menu">Just show me the menu 📋</button>
+                                        ${state.previousOrder ? `<button class="chat-option-btn text-rose-700 border-rose-100 bg-rose-50/30 font-bold" id="aira-repeat-last">Yes! Repeat my last order 🔄</button>` : ''}
+                                    ` : ''}
+
+                                    ${mode === 'mood' ? `
+                                        <div class="flex flex-wrap gap-2 pt-1">
+                                            ${Object.keys(moodMap).map(mood => `<button class="mood-btn" data-mood="${mood}">${mood}</button>`).join('')}
                                         </div>
-                                    `).join('')}
+                                        <button class="chat-option-btn mt-4 text-xs opacity-60" id="aira-back-home">Nevermind, go back</button>
+                                    ` : ''}
+
+                                    ${mode === 'suggestions' ? `
+                                        <button class="chat-option-btn" id="aira-back-home">Let's try a different mood 🔄</button>
+                                        <button class="chat-option-btn" id="aira-tell-joke">Tell me a food joke! 😂</button>
+                                    ` : ''}
+
+                                    ${mode === 'ordered' ? `
+                                        <div class="space-y-2">
+                                            <button class="chat-option-btn border-rose-400 font-bold" id="aira-play-ttt">🎮 Play Tic Tac Toe</button>
+                                            <button class="chat-option-btn border-orange-400 font-bold" id="aira-play-tap">😋 Feed Aira (Hunger Tap)</button>
+                                            <button class="chat-option-btn" id="aira-food-trivia">💡 Fun Food Trivia</button>
+                                            ${!userInfo ? `<button class="chat-option-btn" id="aira-chat-setup">💬 Set up my profile</button>` : `<button class="chat-option-btn" id="aira-companion-start">👥 Tell me who you're with</button>`}
+                                        </div>
+                                        <div class="mt-4 pt-4 border-t border-rose-100 text-center">
+                                            <p class="text-[10px] font-bold text-rose-800 mb-2 italic">Waiting for food? Tag @aira.nextgen on your story! 📸</p>
+                                             <a href="https://www.instagram.com/aira.nextgen" target="_blank" class="inline-flex items-center gap-2 bg-[#A40046] text-white px-4 py-2 rounded-full text-[10px] font-bold shadow-lg transform hover:scale-105 transition-all">
+                                                <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                                <span>Mention @aira.nextgen</span>
+                                            </a>
+                                        </div>
+                                    ` : ''}
+
+                                    ${mode === 'name_input' ? `
+                                        <input type="text" id="aira-name-field" placeholder="What's your name?" class="w-full border-2 border-rose-100 rounded-xl p-2 text-sm focus:outline-none focus:border-rose-400 text-rose-900">
+                                        <button class="chat-option-btn bg-rose-500 text-white text-center" id="aira-save-name">Continue ➜</button>
+                                    ` : ''}
+
+                                    ${mode === 'gender_input' ? `
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button class="chat-option-btn text-center" data-gender="male">Male 👦</button>
+                                            <button class="chat-option-btn text-center" data-gender="female">Female 👧</button>
+                                        </div>
+                                    ` : ''}
+
+                                    ${mode === 'birthday_input' ? `
+                                        <input type="date" id="aira-birth-field" class="w-full border-2 border-rose-100 rounded-xl p-2 text-sm focus:outline-none focus:border-rose-400 text-rose-900">
+                                        <button class="chat-option-btn bg-rose-500 text-white text-center" id="aira-save-birth">Save Birthday 🎂</button>
+                                    ` : ''}
+
+                                    ${mode === 'companion_check' ? `
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button class="chat-option-btn text-center" id="aira-companion-yes">Yes, I'm with someone! 👫</button>
+                                            <button class="chat-option-btn text-center" id="aira-companion-no">Nope, solo date! 🙋‍♂️</button>
+                                        </div>
+                                    ` : ''}
+
+                                    ${mode === 'companion_type' ? `
+                                        <div class="space-y-1">
+                                            <button class="chat-option-btn" data-ctype="family">With Family 👨‍👩‍👧‍👦</button>
+                                            <button class="chat-option-btn" data-ctype="friends">With Friends 🍻</button>
+                                            ${isBoy ? `<button class="chat-option-btn" data-ctype="gf">With my GF ❤️</button>` : ''}
+                                            ${isGirl ? `<button class="chat-option-btn" data-ctype="bf">With my BF ❤️</button>` : ''}
+                                        </div>
+                                    ` : ''}
+
+                                    ${mode === 'game_ttt' ? `
+                                        <div class="ttt-grid">
+                                            ${tttBoard.map((val, idx) => `<div class="ttt-cell ${val ? val.toLowerCase() : ''}" data-idx="${idx}">${val || ''}</div>`).join('')}
+                                        </div>
+                                        ${tttStatus !== 'playing' ? `<button class="chat-option-btn text-center bg-rose-100" id="aira-reset-ttt">Play Again! 🔄</button>` : ''}
+                                        <button class="chat-option-btn mt-2 text-xs opacity-60" id="aira-back-ordered">I'm done playing</button>
+                                    ` : ''}
+
+                                    ${mode === 'game_tap' ? `
+                                        <div class="hunger-game-container">
+                                            <p class="text-xs font-bold mb-1">Hunger Meter: ${hungerScore}%</p>
+                                            <div class="hunger-bar-bg"><div class="hunger-bar-fill" style="width: ${hungerScore}%"></div></div>
+                                            <div class="aira-tap-target" id="aira-hunger-tap">
+                                                <img src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=aira&backgroundColor=ffffff" class="w-full h-full rounded-full border-2 border-[#C0A062]">
+                                            </div>
+                                            <p class="text-[10px] text-gray-400">TAP ME FAST TO FEED ME!</p>
+                                        </div>
+                                        ${hungerScore >= 100 ? `<button class="chat-option-btn text-center bg-green-100" id="aira-tap-win">I'm Full! Thank you! 😋</button>` : ''}
+                                        <button class="chat-option-btn mt-2 text-xs opacity-60" id="aira-back-ordered">Stop feeding</button>
+                                    ` : ''}
+
+                                    ${mode === 'trivia' ? `
+                                        <button class="chat-option-btn" id="aira-food-trivia">Another fact! 💡</button>
+                                        <button class="chat-option-btn" id="aira-back-ordered">Go back</button>
+                                    ` : ''}
                                 </div>
                             ` : ''}
                         </div>
-                    `).join('')}
-                    ${state.isThinking ? `
-                        <div class="message message-aira">
-                            <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-                        </div>` : ''}
-                </div>
-                <div class="chat-input-area">
-                    ${!state.isThinking && state.airaChat[state.airaChat.length - 1].type === 'options' ? `
-                        <div class="chat-options">
-                            ${state.airaChat[state.airaChat.length - 1].options.map(opt => `
-                                <button class="option-btn btn-haptic" data-val="${opt}">${opt}</button>
-                            `).join('')}
-                        </div>
-                    ` : `
-                        <div class="text-[10px] text-gray-500 text-center">Chat with Aira to get recommendations</div>
-                    `}
-                </div>
-            </div>
-        `;
-
-        const MenuItem = (item, idx) => `
-            <div class="stagger-item bg-white rounded-xl overflow-hidden shadow-md flex flex-col border border-gray-100" style="animation-delay: ${idx * 0.05}s">
-                <div class="h-32 overflow-hidden relative">
-                    <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
-                    <div class="absolute bottom-2 right-2 bg-black/50 backdrop-blur-md text-white text-[9px] px-2 py-0.5 rounded-full font-bold">${item.spice}</div>
-                </div>
-                <div class="p-3 flex flex-col flex-grow">
-                    <div class="flex justify-between items-start mb-1 gap-1">
-                        <h3 class="text-[#A40046] font-bold text-[12px] leading-tight line-clamp-1">${item.name}</h3>
-                        <span class="text-[11px] font-black text-gray-700 whitespace-nowrap">₹${item.price}</span>
                     </div>
-                    <p class="text-[9px] text-gray-400 line-clamp-2 mb-3 leading-tight">${item.description}</p>
-                    <button class="add-btn mt-auto bg-[#A40046] text-white py-1.5 rounded-lg text-[10px] font-bold btn-haptic" data-id="${item.id}">Add</button>
-                </div>
+                ` : ''}
+                <button id="aira-trigger-btn" class="w-14 h-14 bg-white border-2 border-[#C0A062] rounded-full flex items-center justify-center shadow-2xl aira-float aira-btn-pulse group overflow-hidden transition-all duration-300 hover:rotate-12">
+                    <img src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=aira&backgroundColor=ffffff" alt="Aira" class="w-10 h-10 group-hover:scale-110 transition-transform">
+                </button>
             </div>
         `;
+        };
 
-        const CartDrawer = () => {
-            const items = Object.values(state.cart);
-            const total = items.reduce((s, i) => s + (i.price * i.quantity), 0);
-            return `
-                <div id="cart-drawer" class="fixed inset-0 z-[1001] bg-black/60 backdrop-blur-sm transition-opacity ${state.isCartOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}">
-                    <aside class="absolute bottom-0 left-0 w-full h-[75%] bg-[#F5EFE6] rounded-t-[2.5rem] p-6 flex flex-col shadow-2xl transition-transform ${state.isCartOpen ? 'translate-y-0' : 'translate-y-full'}">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-black text-[#A40046] royal-font">Your Basket</h2>
-                            <button id="close-cart-drawer" class="p-2"><svg class="w-6 h-6 text-[#A40046]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-                        </div>
-                        <div class="flex-grow overflow-y-auto hide-scroll space-y-3">
-                            ${items.length === 0 ? `<p class="text-center py-20 text-gray-400 italic text-sm">Empty basket...</p>` : items.map(i => `
-                                <div class="flex items-center gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                                    <img src="${i.image}" class="w-12 h-12 rounded-lg object-cover" />
-                                    <div class="flex-grow">
-                                        <p class="font-bold text-[12px] text-[#A40046]">${i.name}</p>
-                                        <p class="text-[10px] font-bold">₹${i.price}</p>
-                                    </div>
-                                    <div class="flex items-center gap-3 bg-gray-50 px-2 py-1 rounded-lg">
-                                        <button class="qty-btn font-black text-[#A40046]" data-id="${i.id}" data-v="-1">－</button>
-                                        <span class="text-xs font-bold">${i.quantity}</span>
-                                        <button class="qty-btn font-black text-[#A40046]" data-id="${i.id}" data-v="1">＋</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="mt-4 pt-4 border-t border-pink-100">
-                            <div class="flex justify-between text-lg font-black text-[#A40046] mb-5">
-                                <span>Total</span><span>₹${total}</span>
-                            </div>
-                            <button id="checkout" class="w-full bg-[#A40046] text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl btn-haptic ${items.length === 0 ? 'opacity-30' : ''}">Dispatch Order</button>
-                        </div>
-                    </aside>
+        const Footer = () => `
+            <footer class="bg-[#830038] text-white py-6 mt-12 border-t-2 border-[#C0A062]/60">
+                <div class="container mx-auto px-4 text-center">
+                    <div class="flex flex-col items-center gap-4">
+                         <a href="#" class="flex items-center gap-3 text-gray-300 hover:text-white transition-colors">
+                            <span class="text-sm font-semibold">Designed & Maintained by NextGen.</span>
+                        </a>
+                        <p class="text-xs text-gray-400">&copy; ${new Date().getFullYear()}NAई बहु × NextGen. All Rights Reserved.</p>
+                    </div>
                 </div>
-            `;
+            </footer>
+        `;
+
+        // --- LOGIC FUNCTIONS ---
+        
+        const speakAira = (msg, mode = 'greeting', delay = 600) => {
+            state.airaIsTyping = true;
+            renderApp();
+            setTimeout(() => {
+                state.airaIsTyping = false;
+                state.airaMessage = msg;
+                state.airaMode = mode;
+                renderApp();
+            }, delay);
+        };
+
+        const getAiraGreetingText = () => {
+            const userGreeting = state.userInfo ? `Welcome back!` : "Hey there!";
+            
+            // Birthday check
+            if (state.userInfo && state.userInfo.birthday) {
+                const today = new Date();
+                const bday = new Date(state.userInfo.birthday);
+                if (today.getDate() === bday.getDate() && today.getMonth() === bday.getMonth()) {
+                    return `OMG!! HAPPY BIRTHDAY 🎂🎈 I was waiting for you! It's so special to have you here today. What can I help you find for your birthday feast? ✨`;
+                }
+            }
+
+            if (state.previousOrder && state.previousOrder.items && state.previousOrder.items.length > 0) {
+                const lastItem = state.previousOrder.items[0].name;
+                return `${userGreeting} I remember you! Last time you had the <b>${lastItem}</b>. It was a great choice! Should we go for it again, or are we trying something different today? ✨`;
+            }
+            return `${userGreeting} I'm <b>Aira</b>, your friendly foodie buddy! I help humans find the best food based on their vibe. So... how's life? And more importantly, how's your appetite? 😋`;
+        };
+
+        const foodJokes = [
+            "What do you call a fake noodle? An Impasta! 🍝",
+            "I'm on a seafood diet. I see food and I eat it! 🦀",
+            "Why did the tomato turn red? Because it saw the salad dressing! 🍅",
+            "What do you call a sad cheese? Blue cheese. 🧀",
+            "I've got a lot of 'fillings' for these soups. Get it? 🍲"
+        ];
+
+        function handleFilterMenu(category) {
+            state.activeCategory = category;
+            state.searchResults = null;
+            state.searchQueryDisplay = '';
+            state.showFavorites = false;
+            renderApp();
+        }
+        
+        function handleSearch(query) {
+            const lowerCaseQuery = query.toLowerCase();
+            state.searchQueryDisplay = query;
+            state.searchResults = MENU.filter(item => 
+                item.name.toLowerCase().includes(lowerCaseQuery) ||
+                item.description.toLowerCase().includes(lowerCaseQuery) ||
+                (item.searchTerms && item.searchTerms.some(term => term.toLowerCase().includes(lowerCaseQuery)))
+            );
+            state.isSearchOpen = false;
+            renderApp();
+        }
+        
+        function clearSearch() {
+            state.searchResults = null;
+            state.searchQueryDisplay = '';
+            handleFilterMenu(state.activeCategory);
         }
 
-        function render() {
-            let list = state.activeCategory === 'All' ? MENU : MENU.filter(i => i.category === state.activeCategory);
+        function toggleFavorite(itemId) {
+            const index = state.favorites.indexOf(itemId);
+            if (index === -1) {
+                state.favorites.push(itemId);
+            } else {
+                state.favorites.splice(index, 1);
+            }
+            localStorage.setItem('favorites', JSON.stringify(state.favorites));
+            renderApp();
+        }
+
+        function toggleFavoritesView() {
+            state.showFavorites = !state.showFavorites;
+            state.searchResults = null;
+            state.searchQueryDisplay = '';
+            renderApp();
+        }
+
+        function addToCart(itemId) {
+            state.orderJustSent = false;
+            const item = MENU.find(i => i.id === itemId);
+            if (!item) return;
+
+            const existingItem = state.cart[itemId];
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                state.cart[itemId] = { ...item, quantity: 1 };
+            }
+            
+            state.lastAddedItem = item.name;
+            state.notificationKey += 1;
+            renderApp();
+            setTimeout(() => { if (state.notificationKey === state.notificationKey) { state.lastAddedItem = null; renderApp(); } }, 3000);
+        }
+        
+        function changeQuantity(itemId, change) {
+            const item = state.cart[itemId];
+            if (!item) return;
+            item.quantity += change;
+            if (item.quantity <= 0) delete state.cart[itemId];
+            renderApp();
+        }
+
+        function triggerInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    deferredPrompt = null;
+                    state.isInstallable = false;
+                    renderApp();
+                });
+            }
+        }
+        
+        async function sendOrder() {
+            const items = Object.values(state.cart);
+            if (items.length === 0 || !state.tableNumber) return;
+
+            document.getElementById('send-order-text').innerHTML = `<span>Sending...</span>`;
+            document.getElementById('send-order-btn').disabled = true;
+
+            const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const orderNumber = `NB-${Date.now().toString().slice(-6)}`;
+            const orderTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+            
+            const orderData = {
+                orderNumber,
+                tableNumber: state.tableNumber,
+                items,
+                total,
+                orderTime,
+                timestamp: new Date().toISOString(),
+                status: 'new'
+            };
+            
+            try {
+                if (GOOGLE_APPS_SCRIPT_URL) {
+                    await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        cache: 'no-cache',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData),
+                    });
+                }
+                
+                state.message = { text: `Order ${orderNumber} sent!`, type: 'success' };
+                state.previousOrder = orderData;
+                localStorage.setItem('previousOrder', JSON.stringify(orderData));
+                state.cart = {};
+                state.orderJustSent = true;
+                
+                // AIRA Post-Order Mode
+                state.isAiraOpen = true;
+                const afterOrderMsg = state.userInfo && state.userInfo.gender === 'male' ? "hey handsome, your order is placed! 🥳 I've told the chefs to make it extra special for you. While we wait, play with me! And don't forget to mention <b>@aira.nextgen</b> on your Instagram story! 📸" : "hey dear, your order is placed! 🥳 Our chefs are cooking it now. While we wait, let's have some fun! Or mention me <b>@aira.nextgen</b> on Instagram story! 📸";
+                speakAira(afterOrderMsg, 'ordered', 1000);
+                
+                confetti();
+
+            } catch (error) {
+                console.error('Error sending order:', error);
+                state.message = { text: 'Error', type: 'error' };
+            } finally {
+                renderApp();
+            }
+        }
+
+        // TIC TAC TOE LOGIC
+        function checkTTTWinner(board) {
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let line of lines) {
+                const [a, b, c] = line;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
+            }
+            if (!board.includes(null)) return 'draw';
+            return null;
+        }
+
+        function airaTTTMove() {
+            const availableIndices = state.tttBoard.map((v, i) => v === null ? i : null).filter(v => v !== null);
+            if (availableIndices.length === 0) return;
+            const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            state.tttBoard[randomIndex] = 'O';
+            const winner = checkTTTWinner(state.tttBoard);
+            if (winner) {
+                state.tttStatus = winner;
+                speakAira(winner === 'O' ? "HA! I won! 🤖 Don't feel bad, I'm literally built for this. Play again?" : winner === 'draw' ? "It's a draw! 🤝 We are both legends. Another round?" : "You won! 👏 Aira is impressed! One more?", 'game_ttt', 400);
+            } else {
+                renderApp();
+            }
+        }
+
+        // --- MAIN RENDER LOGIC ---
+
+        function renderApp() {
+            const cartCount = Object.values(state.cart).reduce((sum, item) => sum + item.quantity, 0);
+            const favoritesCount = state.favorites.length;
+
+            let filteredMenu = MENU;
+            if (state.showFavorites) {
+                filteredMenu = MENU.filter(item => state.favorites.includes(item.id));
+            } else if (state.activeCategory !== 'All') {
+                filteredMenu = MENU.filter(item => item.category === state.activeCategory);
+            }
+
+            if (!state.airaMessage) {
+                state.airaMessage = getAiraGreetingText();
+            }
 
             root.innerHTML = `
-                <div class="min-h-screen flex flex-col">
-                    ${Header()}
-                    <main class="container mx-auto px-4 py-6 flex-grow">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-black royal-font text-white">
-                                ${state.activeCategory === 'All' ? 'Signature Dishes' : state.activeCategory}
-                            </h2>
-                        </div>
-                        
-                        <div class="flex gap-2 overflow-x-auto hide-scroll pb-4 mb-2">
-                            ${['All', 'Soup', 'BBQ', 'Chaap', 'Pav Bhaji', 'Rice', 'Pasta', 'Noodles'].map(c => `
-                                <button class="cat-btn px-4 py-2 rounded-lg text-[10px] font-bold border border-white/20 whitespace-nowrap transition-all ${state.activeCategory === c ? 'bg-white text-[#A40046]' : 'text-white'}" data-cat="${c}">${c}</button>
-                            `).join('')}
-                        </div>
-
-                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            ${list.map((item, idx) => MenuItem(item, idx)).join('')}
-                        </div>
-                    </main>
-
-                    ${AiraTrigger()}
-                    ${ChatInterface()}
-                    ${CartDrawer()}
-
-                    <footer class="py-12 text-center opacity-30">
-                        <p class="text-[9px] font-black tracking-widest text-white">NAई बहु × NEXT-GEN CULINARY</p>
-                    </footer>
+                <div class="relative z-10 min-h-screen flex flex-col">
+                    <div class="flex-grow">
+                        ${AddToCartNotification({ itemName: state.lastAddedItem, key: state.notificationKey })}
+                        ${Header({ tableNumber: state.tableNumber, cartCount, isInstallable: state.isInstallable, showFavorites: state.showFavorites, favoritesCount })}
+                        <main class="container mx-auto px-2 sm:px-4 lg:px-8 mt-4 sm:mt-6 lg:mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 text-white">
+                            ${MenuSection({ activeCategory: state.activeCategory, searchResults: state.searchResults, searchQueryDisplay: state.searchQueryDisplay, filteredMenu, showFavorites: state.showFavorites, favorites: state.favorites })}
+                            ${CartSidebar({ isOpen: state.isCartOpen, cart: state.cart, previousOrder: state.previousOrder, message: state.message, orderJustSent: state.orderJustSent })}
+                        </main>
+                    </div>
+                    ${Footer()}
+                    ${SearchModal({ isOpen: state.isSearchOpen })}
+                    ${CategoryModal({ isOpen: state.isCategoryModalOpen, activeCategory: state.activeCategory })}
+                    ${FloatingCategoryButton({ isVisible: state.isFloatingCategoryButtonVisible })}
+                    ${FloatingCartButton({ isVisible: state.isFloatingCartButtonVisible, cartCount })}
+                    ${ItemDetailModal({ item: state.selectedItem })}
+                    ${AiraAssistant({ 
+                        isOpen: state.isAiraOpen, 
+                        message: state.airaMessage, 
+                        moodMap: MOOD_MAP, 
+                        mode: state.airaMode, 
+                        isTyping: state.airaIsTyping,
+                        tttBoard: state.tttBoard,
+                        tttStatus: state.tttStatus,
+                        userInfo: state.userInfo,
+                        hungerScore: state.hungerScore
+                    })}
                 </div>
             `;
-
-            const chatScroller = document.getElementById('chat-scroller');
-            if (chatScroller) chatScroller.scrollTop = chatScroller.scrollHeight;
-
-            attachEvents();
-        }
-
-        function attachEvents() {
-            // Aira Interaction
-            document.getElementById('aira-trigger')?.addEventListener('click', () => { state.isAiraActive = true; render(); });
-            document.getElementById('close-chat')?.addEventListener('click', () => { state.isAiraActive = false; render(); });
-
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const val = btn.dataset.val;
-                    state.airaChat.push({ sender: 'user', text: val, type: 'text' });
-                    state.isThinking = true;
-                    render();
-
-                    setTimeout(() => {
-                        state.isThinking = false;
-                        if (!state.currentMood) {
-                            state.currentMood = val;
-                            const picks = MENU.filter(m => m.mood.includes(val)).slice(0, 3);
-                            state.airaChat.push({ 
-                                sender: 'aira', 
-                                text: `I understand! Since you're feeling ${val.toLowerCase()}, I highly recommend these for you:`, 
-                                type: 'food_cards',
-                                items: picks
-                            });
-                            state.airaChat.push({ 
-                                sender: 'aira', 
-                                text: "Would you like to explore something else or are these perfect?", 
-                                type: 'options',
-                                options: ['More Options', 'Reset Chat']
-                            });
-                        } else if (val === 'Reset Chat') {
-                            state.currentMood = null;
-                            state.airaChat = [state.airaChat[0]];
-                        } else if (val === 'More Options') {
-                             state.airaChat.push({ 
-                                sender: 'aira', 
-                                text: "I can look into our Sizzlers or BBQ specials too! How about that?", 
-                                type: 'options', 
-                                options: ['Show BBQ', 'Show Sizzlers', 'Reset Chat'] 
-                            });
-                        } else if (val.includes('Show')) {
-                            const cat = val.split(' ')[1];
-                            const picks = MENU.filter(m => m.category === cat).slice(0, 3);
-                            state.airaChat.push({ 
-                                sender: 'aira', 
-                                text: `Here are our best ${cat} items:`, 
-                                type: 'food_cards',
-                                items: picks
-                            });
-                            state.airaChat.push({ 
-                                sender: 'aira', 
-                                text: "Anything else, boss?", 
-                                type: 'options',
-                                options: ['Reset Chat']
-                            });
-                        }
-                        render();
-                    }, 1200);
-                });
-            });
-
-            // Add from Aira Chat
-            document.querySelectorAll('.add-btn-aira').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = btn.dataset.id;
-                    const item = MENU.find(m => m.id == id);
-                    if (state.cart[id]) state.cart[id].quantity++;
-                    else state.cart[id] = { ...item, quantity: 1 };
-                    triggerConfetti();
-                    render();
-                });
-            });
-
-            // Cart & Menu Events
-            document.getElementById('cart-btn')?.addEventListener('click', () => { state.isCartOpen = true; render(); });
-            document.getElementById('close-cart-drawer')?.addEventListener('click', () => { state.isCartOpen = false; render(); });
             
-            document.querySelectorAll('.qty-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const id = btn.dataset.id;
-                    state.cart[id].quantity += parseInt(btn.dataset.v);
-                    if (state.cart[id].quantity <= 0) delete state.cart[id];
-                    render();
+            attachEventListeners();
+        }
+        
+        function initializeSliderAnimations() {
+            const sliderItems = document.querySelectorAll('.category-slider-item');
+            if (sliderItems.length === 0) return;
+            sliderItems.forEach((item, index) => { item.style.transitionDelay = `${index * 100}ms`; });
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
                 });
-            });
-
-            document.getElementById('checkout')?.addEventListener('click', () => {
-                if(Object.keys(state.cart).length === 0) return;
-                triggerConfetti();
-                alert(`Order Success! Table ${state.tableNumber} is ready.`);
-                state.cart = {};
-                state.isCartOpen = false;
-                render();
-            });
-
-            document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    state.activeCategory = btn.dataset.cat;
-                    render();
-                });
-            });
-
-            document.querySelectorAll('.add-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = btn.dataset.id;
-                    const item = MENU.find(m => m.id == id);
-                    if (state.cart[id]) state.cart[id].quantity++;
-                    else state.cart[id] = { ...item, quantity: 1 };
-                    flyToCart(btn);
-                    setTimeout(render, 400);
-                });
-            });
-
-            document.getElementById('table-select')?.addEventListener('change', (e) => {
-                state.tableNumber = e.target.value;
-            });
+            }, { threshold: 0.2 });
+            sliderItems.forEach(item => observer.observe(item));
         }
 
-        render();
+        function attachEventListeners() {
+            document.getElementById('table-number-select')?.addEventListener('change', e => state.tableNumber = e.target.value);
+            document.getElementById('search-btn')?.addEventListener('click', () => { state.isSearchOpen = true; renderApp(); });
+            document.getElementById('cart-btn')?.addEventListener('click', () => { state.isCartOpen = !state.isCartOpen; renderApp(); });
+            document.getElementById('favorites-btn')?.addEventListener('click', toggleFavoritesView);
+            document.getElementById('install-app-btn')?.addEventListener('click', triggerInstall);
+            
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => { e.stopPropagation(); addToCart(parseInt(btn.dataset.itemId)); });
+            });
+            document.querySelectorAll('.favorite-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(parseInt(btn.dataset.itemId)); });
+            });
+            document.querySelectorAll('.menu-item-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('.favorite-toggle-btn') && !e.target.closest('.add-to-cart-btn')) {
+                        const itemId = parseInt(card.dataset.itemId);
+                        state.selectedItem = MENU.find(i => i.id === itemId);
+                        renderApp();
+                    }
+                });
+            });
+
+            document.getElementById('clear-search-btn')?.addEventListener('click', clearSearch);
+            document.getElementById('category-modal-trigger')?.addEventListener('click', () => { state.isCategoryModalOpen = true; renderApp(); });
+            document.getElementById('back-to-menu-btn')?.addEventListener('click', () => { state.showFavorites = false; renderApp(); });
+
+            document.querySelectorAll('.category-slider-item').forEach(item => {
+                item.addEventListener('click', () => handleFilterMenu(item.dataset.category));
+            });
+            initializeSliderAnimations();
+
+            document.getElementById('cart-close-btn')?.addEventListener('click', () => { state.isCartOpen = false; renderApp(); });
+            document.querySelectorAll('.quantity-change-btn').forEach(btn => {
+                btn.addEventListener('click', () => changeQuantity(parseInt(btn.dataset.itemId), parseInt(btn.dataset.change)));
+            });
+            document.getElementById('send-order-btn')?.addEventListener('click', sendOrder);
+            
+            // AIRA Assistant Events
+            document.getElementById('aira-trigger-btn')?.addEventListener('click', () => {
+                state.isAiraOpen = !state.isAiraOpen;
+                if (state.isAiraOpen) {
+                    if (state.orderJustSent) {
+                         speakAira("hey dear, waiting for food? 🥘 Don't forget to mention me <b>@aira.nextgen</b>! Want to play a game or chat?", 'ordered', 400);
+                    } else {
+                        speakAira(getAiraGreetingText(), 'greeting', 400);
+                    }
+                }
+                renderApp();
+            });
+            document.getElementById('aira-close-btn')?.addEventListener('click', () => {
+                state.isAiraOpen = false;
+                renderApp();
+            });
+
+            // Post-Order Handlers
+            document.getElementById('aira-play-ttt')?.addEventListener('click', () => {
+                state.tttBoard = Array(9).fill(null);
+                state.tttStatus = 'playing';
+                speakAira("Let's go! I'm 'O', you are 'X'. Your turn first!", 'game_ttt', 500);
+            });
+            document.getElementById('aira-play-tap')?.addEventListener('click', () => {
+                state.hungerScore = 0;
+                speakAira("I'm starving!! Feed me by tapping me as fast as you can! 🍪🍔", 'game_tap', 500);
+            });
+            document.getElementById('aira-hunger-tap')?.addEventListener('click', () => {
+                if (state.hungerScore < 100) {
+                    state.hungerScore += 5;
+                    renderApp();
+                    if (state.hungerScore >= 100) {
+                        speakAira("OOF! I'm so full! You are a hero! 🏆 I feel like I might explode with happiness!", 'game_tap', 200);
+                    }
+                }
+            });
+            document.getElementById('aira-tap-win')?.addEventListener('click', () => {
+                state.hungerScore = 0;
+                speakAira("That was fun! Ready for more stuff or back to waiting?", 'ordered', 400);
+            });
+
+            document.getElementById('aira-reset-ttt')?.addEventListener('click', () => {
+                state.tttBoard = Array(9).fill(null);
+                state.tttStatus = 'playing';
+                speakAira("Round two! I won't go easy this time! You start.", 'game_ttt', 400);
+            });
+            document.getElementById('aira-chat-setup')?.addEventListener('click', () => {
+                speakAira("I'd love to know you better! First things first, what's your lovely name?", 'name_input', 500);
+            });
+            document.getElementById('aira-food-trivia')?.addEventListener('click', () => {
+                const fact = TRIVIA[Math.floor(Math.random() * TRIVIA.length)];
+                speakAira(`${fact} 💡 Cool, right?`, 'trivia', 600);
+            });
+            document.getElementById('aira-back-ordered')?.addEventListener('click', () => {
+                speakAira("Back to the options! What else can we do?", 'ordered', 400);
+            });
+
+            // Companion logic
+            document.getElementById('aira-companion-start')?.addEventListener('click', () => {
+                speakAira("So tell me... did you come here with someone special? 👫", 'companion_check', 500);
+            });
+            document.getElementById('aira-companion-yes')?.addEventListener('click', () => {
+                const isBoy = state.userInfo && state.userInfo.gender === 'male';
+                const isGirl = state.userInfo && state.userInfo.gender === 'female';
+                let q = "Ooh, nice! Who are they?";
+                if (isBoy) q = "Ooh! Is it your <b>girlfriend</b>, or just family and friends?";
+                if (isGirl) q = "Ooh! Is it your <b>boyfriend</b>, or just family and friends?";
+                speakAira(q, 'companion_type', 600);
+            });
+            document.getElementById('aira-companion-no')?.addEventListener('click', () => {
+                const isBoy = state.userInfo && state.userInfo.gender === 'male';
+                speakAira(isBoy ? "A solo handsome king! 👑 I love that confidence. More food for you!" : "A solo queen! 👑 Enjoying your own company is the best vibe ever.", 'ordered', 600);
+            });
+            document.querySelectorAll('[data-ctype]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const ctype = btn.dataset.ctype;
+                    let resp = "That's lovely! Enjoy your time together. ❤️";
+                    if (ctype === 'gf') resp = "Whoa! Lucky girl! Hope you guys have a romantic meal. ❤️ Don't forget to share a bite!";
+                    if (ctype === 'bf') resp = "Aww! Hope he treats you like the queen you are! ❤️ Enjoy the date!";
+                    if (ctype === 'family') resp = "Family time is the best time! 👨‍👩‍👧‍👦 I'm sure they are happy to be with you.";
+                    speakAira(resp, 'ordered', 700);
+                });
+            });
+
+            // Profile Setup Logic
+            document.getElementById('aira-save-name')?.addEventListener('click', () => {
+                const name = document.getElementById('aira-name-field').value.trim();
+                if (name) {
+                    state.userInfo = { name };
+                    speakAira(`Nice to meet you, ${name}! Are you a boy or a girl? Just for my records! 😉`, 'gender_input', 600);
+                }
+            });
+            document.querySelectorAll('[data-gender]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const gender = btn.dataset.gender;
+                    state.userInfo.gender = gender;
+                    speakAira(`Got it! Last one... when is your birthday? I want to remember it! 🎂`, 'birthday_input', 600);
+                });
+            });
+            document.getElementById('aira-save-birth')?.addEventListener('click', () => {
+                const bday = document.getElementById('aira-birth-field').value;
+                if (bday) {
+                    state.userInfo.birthday = bday;
+                    localStorage.setItem('airaUserInfo', JSON.stringify(state.userInfo));
+                    speakAira(`Perfect! Now I'll remember you forever! ✨ hey ${state.userInfo.name}, you're officially my bestie.`, 'ordered', 700);
+                }
+            });
+
+            // TTT Interaction
+            document.querySelectorAll('.ttt-cell').forEach(cell => {
+                cell.addEventListener('click', () => {
+                    if (state.tttStatus !== 'playing') return;
+                    const idx = cell.dataset.idx;
+                    if (state.tttBoard[idx]) return;
+                    
+                    state.tttBoard[idx] = 'X';
+                    const winner = checkTTTWinner(state.tttBoard);
+                    if (winner) {
+                        state.tttStatus = winner;
+                        speakAira(winner === 'X' ? "You won! 🎉 You're actually really good at this!" : "It's a draw! 🤝 Let's go again?", 'game_ttt', 400);
+                    } else {
+                        airaTTTMove();
+                    }
+                });
+            });
+
+            // Illusion Handlers
+            document.getElementById('aira-explore-mood')?.addEventListener('click', () => {
+                speakAira("Mood search is my favorite feature! 🎨 How are you feeling right now? Select a mood and I'll work my magic!", 'mood', 500);
+            });
+            document.getElementById('aira-help-choose')?.addEventListener('click', () => {
+                const randomItem = MENU[Math.floor(Math.random() * MENU.length)];
+                speakAira(`hey dear, I'm feeling lucky today! How about the <b>${randomItem.name}</b>? It's one of our crowd favorites. I've highlighted it for you! 🎲`, 'suggestions', 800);
+                state.activeCategory = randomItem.category;
+                state.searchResults = [randomItem];
+            });
+            document.getElementById('aira-explore-menu')?.addEventListener('click', () => {
+                speakAira("Got it! I'll step aside so you can explore. Let me know if you need any 'punny' jokes! 📋", 'greeting', 400);
+                state.activeCategory = 'All';
+                state.searchResults = null;
+            });
+            document.getElementById('aira-repeat-last')?.addEventListener('click', () => {
+                if (state.previousOrder) {
+                    state.previousOrder.items.forEach(item => {
+                        for(let k=0; k<item.quantity; k++) addToCart(item.id);
+                    });
+                    speakAira("BOOM! 🔄 Done! I've added your last feast to the cart. Anything else I can help with?", 'greeting', 700);
+                }
+            });
+            document.getElementById('aira-back-home')?.addEventListener('click', () => {
+                speakAira(getAiraGreetingText(), 'greeting', 400);
+                state.searchResults = null;
+            });
+            document.getElementById('aira-tell-joke')?.addEventListener('click', () => {
+                const joke = foodJokes[Math.floor(Math.random() * foodJokes.length)];
+                speakAira(`${joke} 😂 Hope that made you smile! Ready to order now?`, 'suggestions', 600);
+            });
+
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mood = btn.dataset.mood;
+                    const searchTerms = MOOD_MAP[mood];
+                    state.searchQueryDisplay = mood;
+                    state.searchResults = MENU.filter(item => 
+                        item.searchTerms && item.searchTerms.some(term => searchTerms.includes(term))
+                    );
+                    speakAira(`hey dear, ooh, <b>${mood}</b> vibe! 🌟 I've filtered out the best matches for you. These will definitely hit the spot!`, 'suggestions', 800);
+                });
+            });
+
+            const searchModalOverlay = document.getElementById('search-modal-overlay');
+            if (searchModalOverlay) {
+                searchModalOverlay.addEventListener('click', () => { state.isSearchOpen = false; renderApp(); });
+                searchModalOverlay.querySelector('div').addEventListener('click', e => e.stopPropagation());
+                document.getElementById('search-modal-close').addEventListener('click', () => { state.isSearchOpen = false; renderApp(); });
+                document.getElementById('perform-search-btn').addEventListener('click', () => {
+                    handleSearch(document.getElementById('search-input').value);
+                });
+            }
+
+            const categoryModalOverlay = document.getElementById('category-modal-overlay');
+            if(categoryModalOverlay) {
+                categoryModalOverlay.addEventListener('click', () => { state.isCategoryModalOpen = false; renderApp(); });
+                categoryModalOverlay.querySelector('div').addEventListener('click', e => e.stopPropagation());
+                document.getElementById('category-modal-close').addEventListener('click', () => { state.isCategoryModalOpen = false; renderApp(); });
+                document.querySelectorAll('.category-select-item').forEach(item => {
+                    item.addEventListener('click', () => { handleFilterMenu(item.dataset.category); state.isCategoryModalOpen = false; });
+                });
+            }
+
+            const itemDetailOverlay = document.getElementById('item-detail-overlay');
+            if(itemDetailOverlay) {
+                const closeModal = () => { state.selectedItem = null; renderApp(); };
+                itemDetailOverlay.addEventListener('click', closeModal);
+                document.getElementById('item-detail-content').addEventListener('click', e => e.stopPropagation());
+                document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+                document.querySelector('.modal-add-to-cart-btn')?.addEventListener('click', (e) => {
+                    addToCart(parseInt(e.currentTarget.dataset.itemId));
+                    closeModal();
+                });
+            }
+
+            document.getElementById('floating-category-btn')?.addEventListener('click', () => { state.isCategoryModalOpen = true; renderApp(); });
+            document.getElementById('floating-cart-btn')?.addEventListener('click', () => { state.isCartOpen = true; renderApp(); });
+        }
+
+        function main() {
+            root.innerHTML = SplashScreen();
+            setTimeout(() => { state.showSplash = false; renderApp(); }, 2000);
+            window.addEventListener('scroll', () => {
+                const shouldBeVisible = window.scrollY > 200;
+                if (state.isFloatingCategoryButtonVisible !== shouldBeVisible) {
+                    state.isFloatingCategoryButtonVisible = shouldBeVisible;
+                    state.isFloatingCartButtonVisible = shouldBeVisible;
+                    renderApp();
+                }
+            });
+        }
+        
+        main();
+
     </script>
 </body>
 </html>
